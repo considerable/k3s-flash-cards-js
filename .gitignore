@@ -1,0 +1,27 @@
+# Node
+node_modules/
+
+# Terraform
+terraform/gcp/.terraform/
+terraform/gcp/.terraform.lock.hcl
+terraform/gcp/terraform.tfstate
+terraform/gcp/terraform.tfstate.backup
+*.tfvars
+
+# Secrets
+*.pem
+*.key
+*.env
+
+# macOS
+.DS_Store
+._*
+
+# VS Code
+.vscode/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~

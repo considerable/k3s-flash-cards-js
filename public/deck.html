@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flash Cards</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
+    h1 { margin-bottom: 0.5rem; }
+    .deck-name { margin-bottom: 1.5rem; font-size: 1rem; color: #e94560; }
+    .counter { margin-bottom: 1.5rem; font-size: 0.9rem; color: #888; }
+    .card-container { perspective: 800px; width: 100%; max-width: 500px; height: 300px; cursor: pointer; }
+    .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s; }
+    .card.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 2rem; font-size: 1.5rem; text-align: center; line-height: 1.4; }
+    .card-front { background: #16213e; border: 2px solid #0f3460; flex-direction: column; }
+    .card-back { background: #0f3460; border: 2px solid #e94560; transform: rotateY(180deg); }
+    .card-meta { font-size: 0.75rem; color: #888; margin-top: 0.5rem; }
+    .nav { margin-top: 1.5rem; display: flex; gap: 1rem; }
+    .nav button { padding: 0.6rem 1.5rem; border: none; border-radius: 8px; background: #e94560; color: #fff; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; }
+    .nav button:hover { opacity: 0.8; }
+    .hint { margin-top: 1rem; font-size: 0.8rem; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>⚡ Flash Cards</h1>
+  <div class="deck-name" id="deckName"></div>
+  <div class="counter" id="counter"></div>
+  <div class="card-container" id="cardContainer">
+    <div class="card" id="card">
+      <div class="card-face card-front" id="front">Loading...</div>
+      <div class="card-face card-back" id="back"></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button onclick="prev()">← Prev</button>
+    <button onclick="shuffle()">🔀 Shuffle</button>
+    <button id="speakBtn" onclick="speak()" style="display:none">🔊 Speak</button>
+    <button onclick="next()">Next →</button>
+  </div>
+  <p class="hint">Click card or press Space to flip · Arrow keys to navigate<span id="speakHint"></span></p>
+
+  <script>
+    let cards = [], idx = 0, lang = null;
+    const $ = id => document.getElementById(id);
+
+    async function init() {
+      const slug = location.pathname.replace(/^\//, '');
+      const decks = await (await fetch('/api/decks')).json();
+      const deck = decks.find(d => d.slug === slug);
+      if (!deck) { $('front').textContent = 'Deck not found'; return; }
+      const data = await (await fetch(`/api/decks/${deck.id}`)).json();
+      cards = data.cards;
+      document.title = data.name + ' — Flash Cards';
+      $('deckName').textContent = data.name;
+      if (slug === 'german') { lang = 'de-DE'; $('speakBtn').style.display = ''; $('speakHint').textContent = ' · Enter to speak'; }
+      show();
+    }
+
+    function speak() {
+      if (!lang || !cards[idx]) return;
+      const flipped = $('card').classList.contains('flipped');
+      const text = flipped ? cards[idx].back : cards[idx].front;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = flipped ? 'en-US' : lang;
+      u.rate = 0.9;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    }
+
+    function show() {
+      $('card').classList.remove('flipped');
+      const c = cards[idx];
+      $('front').innerHTML = (c?.front || '') + (c?.section ? `<div class="card-meta">${c.section} #${c.num || ''}</div>` : '');
+      $('back').textContent = c?.back || '';
+      $('counter').textContent = cards.length ? `${idx + 1} / ${cards.length}` : '';
+    }
+
+    function next() { if (cards.length) { idx = (idx + 1) % cards.length; show(); } }
+    function prev() { if (cards.length) { idx = (idx - 1 + cards.length) % cards.length; show(); } }
+    function shuffle() { for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; } idx = 0; show(); }
+
+    $('cardContainer').addEventListener('click', () => $('card').classList.toggle('flipped'));
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') { e.preventDefault(); $('card').classList.toggle('flipped'); }
+      if (e.code === 'ArrowRight') next();
+      if (e.code === 'ArrowLeft') prev();
+      if (e.code === 'Enter' && lang) { e.preventDefault(); speak(); }
+    });
+
+    init();
+  </script>
+</body>
+</html>

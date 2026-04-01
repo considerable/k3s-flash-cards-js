@@ -1,0 +1,12 @@
+{
+  "name": "flash-cards-js",
+  "version": "1.0.0",
+  "description": "Flash cards app for learning languages, k8s, and more",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

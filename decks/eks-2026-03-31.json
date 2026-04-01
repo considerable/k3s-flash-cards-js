@@ -1,0 +1,182 @@
+{
+  "name": "EKS & Kubernetes (2026-03-31)",
+  "sections": [
+    {
+      "name": "Core Concepts",
+      "cards": [
+        { "num": 1, "front": "What is a Pod?", "back": "Smallest deployable unit — one or more containers sharing network namespace and storage volumes" },
+        { "num": 2, "front": "What is a Deployment?", "back": "Manages ReplicaSets, provides declarative updates, rolling updates, and rollbacks for Pods" },
+        { "num": 3, "front": "What is a ReplicaSet?", "back": "Ensures a specified number of identical Pod replicas are running at all times" },
+        { "num": 4, "front": "What is a Namespace?", "back": "Virtual cluster for resource isolation, RBAC scoping, and resource quotas within a cluster" },
+        { "num": 5, "front": "What is a StatefulSet?", "back": "Manages stateful apps with stable network identities, ordered deployment, and persistent storage per Pod" },
+        { "num": 6, "front": "What is a DaemonSet?", "back": "Ensures a Pod runs on every (or selected) node — used for logging agents, monitoring, CNI plugins" },
+        { "num": 7, "front": "What is a Job?", "back": "Creates one or more Pods that run to completion — used for batch processing" },
+        { "num": 8, "front": "What is a CronJob?", "back": "Runs Jobs on a cron schedule — e.g. backups, report generation" },
+        { "num": 9, "front": "What is a ConfigMap?", "back": "Stores non-confidential config as key-value pairs — mounted as env vars or volumes" },
+        { "num": 10, "front": "What is a Secret?", "back": "Stores sensitive data (passwords, tokens, TLS certs) — base64-encoded, can be encrypted at rest" },
+        { "num": 11, "front": "What is the control plane?", "back": "API server, etcd, scheduler, controller manager — manages cluster state and scheduling decisions" },
+        { "num": 12, "front": "What is etcd?", "back": "Distributed key-value store that holds all cluster state — the single source of truth for K8s" },
+        { "num": 13, "front": "What is the kube-scheduler?", "back": "Assigns Pods to nodes based on resource requirements, affinity, taints, and constraints" },
+        { "num": 14, "front": "What is the kube-controller-manager?", "back": "Runs controllers (Deployment, ReplicaSet, Node, Job) that reconcile desired vs actual state" },
+        { "num": 15, "front": "What is kubelet?", "back": "Agent on each node that ensures containers are running in Pods as specified by PodSpecs" },
+        { "num": 16, "front": "What is kube-proxy?", "back": "Network proxy on each node that maintains iptables/IPVS rules for Service routing" },
+        { "num": 17, "front": "What is kubectl?", "back": "CLI tool to interact with the K8s API server — create, inspect, update, delete resources" },
+        { "num": 18, "front": "What is a container runtime?", "back": "Software that runs containers — containerd (default in EKS), CRI-O. Docker was removed in K8s 1.24" },
+        { "num": 19, "front": "Declarative vs imperative in K8s?", "back": "Declarative: kubectl apply -f (desired state). Imperative: kubectl create/run (direct commands). Declarative is preferred" },
+        { "num": 20, "front": "What is a label?", "back": "Key-value pair on objects used for selection and grouping — e.g. app=web, env=prod" }
+      ]
+    },
+    {
+      "name": "Networking",
+      "cards": [
+        { "num": 21, "front": "What is a Service?", "back": "Stable network endpoint (virtual IP) that load-balances traffic to a set of Pods matched by selector" },
+        { "num": 22, "front": "ClusterIP Service?", "back": "Default type — internal-only virtual IP reachable within the cluster" },
+        { "num": 23, "front": "NodePort Service?", "back": "Exposes Service on a static port (30000-32767) on every node's IP" },
+        { "num": 24, "front": "LoadBalancer Service?", "back": "Provisions an external load balancer (e.g. AWS NLB/CLB) that routes to NodePorts" },
+        { "num": 25, "front": "What is an Ingress?", "back": "HTTP/HTTPS routing rules — host/path-based routing to Services. Requires an Ingress Controller" },
+        { "num": 26, "front": "What is an Ingress Controller?", "back": "Pod that implements Ingress rules — e.g. AWS ALB Ingress Controller, Nginx, Traefik" },
+        { "num": 27, "front": "What is a CNI plugin?", "back": "Container Network Interface — provides Pod networking. EKS uses Amazon VPC CNI (Pods get real VPC IPs)" },
+        { "num": 28, "front": "What is a NetworkPolicy?", "back": "Firewall rules for Pods — controls ingress/egress traffic by label, namespace, or CIDR" },
+        { "num": 29, "front": "What is CoreDNS?", "back": "Cluster DNS server — resolves Service names to ClusterIPs (e.g. my-svc.my-ns.svc.cluster.local)" },
+        { "num": 30, "front": "What is a headless Service?", "back": "Service with clusterIP: None — returns Pod IPs directly via DNS, used with StatefulSets" },
+        { "num": 31, "front": "What is ExternalDNS?", "back": "Controller that creates DNS records (Route 53, etc.) automatically from Ingress/Service annotations" },
+        { "num": 32, "front": "Pod-to-Pod networking model?", "back": "Every Pod gets its own IP. All Pods can communicate without NAT. Flat network enforced by CNI" },
+        { "num": 33, "front": "What is externalTrafficPolicy: Local?", "back": "Preserves client source IP by routing only to Pods on the receiving node — avoids extra hop" },
+        { "num": 34, "front": "What is a Gateway API?", "back": "Next-gen replacement for Ingress — more expressive routing with Gateway, HTTPRoute, GRPCRoute resources" }
+      ]
+    },
+    {
+      "name": "Storage",
+      "cards": [
+        { "num": 35, "front": "What is a PersistentVolume (PV)?", "back": "Cluster-level storage resource — provisioned statically by admin or dynamically via StorageClass" },
+        { "num": 36, "front": "What is a PersistentVolumeClaim (PVC)?", "back": "Request for storage by a Pod — binds to a PV that satisfies size and access mode requirements" },
+        { "num": 37, "front": "What is a StorageClass?", "back": "Defines how PVs are dynamically provisioned — specifies provisioner, parameters, reclaim policy" },
+        { "num": 38, "front": "Access modes for PV?", "back": "ReadWriteOnce (single node), ReadOnlyMany (many nodes read), ReadWriteMany (many nodes read/write)" },
+        { "num": 39, "front": "Reclaim policies?", "back": "Retain (keep PV after PVC deleted), Delete (remove PV and backing storage), Recycle (deprecated)" },
+        { "num": 40, "front": "What is the EBS CSI driver?", "back": "EKS add-on that provisions EBS volumes as PVs — supports gp3, io2, snapshots, encryption" },
+        { "num": 41, "front": "What is the EFS CSI driver?", "back": "Provisions EFS file systems as PVs — supports ReadWriteMany, shared across Pods and nodes" },
+        { "num": 42, "front": "emptyDir volume?", "back": "Temporary volume created with the Pod, deleted when Pod is removed — useful for scratch space or sharing between containers" },
+        { "num": 43, "front": "What is a volumeMount?", "back": "Specifies where a volume is mounted inside a container — path, readOnly, subPath" }
+      ]
+    },
+    {
+      "name": "Security",
+      "cards": [
+        { "num": 44, "front": "What is RBAC?", "back": "Role-Based Access Control — Role/ClusterRole define permissions, RoleBinding/ClusterRoleBinding assign them to users/groups/SAs" },
+        { "num": 45, "front": "Role vs ClusterRole?", "back": "Role is namespace-scoped. ClusterRole is cluster-wide — also used for non-namespaced resources (nodes, PVs)" },
+        { "num": 46, "front": "What is a ServiceAccount?", "back": "Identity for Pods to authenticate with the API server — each namespace has a default SA" },
+        { "num": 47, "front": "What is a SecurityContext?", "back": "Pod/container-level security settings — runAsNonRoot, readOnlyRootFilesystem, capabilities, seccomp" },
+        { "num": 48, "front": "What is Pod Security Admission?", "back": "Built-in admission controller (replaced PodSecurityPolicy) — enforces Privileged, Baseline, or Restricted profiles per namespace" },
+        { "num": 49, "front": "What is OPA/Gatekeeper?", "back": "Policy engine for K8s — enforces custom policies (e.g. no latest tag, require labels) via admission webhooks" },
+        { "num": 50, "front": "What is IRSA?", "back": "IAM Roles for Service Accounts — lets EKS Pods assume IAM roles via OIDC without node-level credentials" },
+        { "num": 51, "front": "What is EKS Pod Identity?", "back": "Newer alternative to IRSA — simpler setup, no OIDC provider needed, uses EKS Pod Identity Agent add-on" },
+        { "num": 52, "front": "Encrypt Secrets at rest?", "back": "EKS supports envelope encryption with KMS. Enable via encryptionConfig on cluster creation" },
+        { "num": 53, "front": "What is Secrets Store CSI Driver?", "back": "Mounts secrets from external stores (AWS Secrets Manager, Parameter Store) as volumes in Pods" },
+        { "num": 54, "front": "What is an admission webhook?", "back": "Intercepts API requests before persistence — Validating (reject bad requests) or Mutating (modify requests)" },
+        { "num": 55, "front": "What are dropped capabilities?", "back": "Linux capabilities removed from container — drop ALL then add only what's needed (e.g. NET_BIND_SERVICE)" },
+        { "num": 56, "front": "What is seccomp?", "back": "Restricts syscalls a container can make — RuntimeDefault profile blocks dangerous syscalls" },
+        { "num": 57, "front": "automountServiceAccountToken: false?", "back": "Prevents auto-mounting the SA token in Pods — reduces attack surface if Pod doesn't need API access" }
+      ]
+    },
+    {
+      "name": "EKS Specifics",
+      "cards": [
+        { "num": 58, "front": "What is EKS?", "back": "Managed Kubernetes service — AWS runs the control plane (API server, etcd), you manage worker nodes" },
+        { "num": 59, "front": "EKS managed node groups?", "back": "AWS manages EC2 instances for you — auto-provisions, patches OS, handles draining during updates" },
+        { "num": 60, "front": "EKS self-managed nodes?", "back": "You manage EC2 instances yourself — full control over AMI, instance type, bootstrap. More operational burden" },
+        { "num": 61, "front": "What is Fargate on EKS?", "back": "Serverless compute for Pods — no nodes to manage. AWS provisions right-sized VMs per Pod. Uses Fargate Profiles" },
+        { "num": 62, "front": "What is a Fargate Profile?", "back": "Defines which Pods run on Fargate — matches by namespace and optional labels" },
+        { "num": 63, "front": "What is the VPC CNI plugin?", "back": "EKS default CNI — assigns real VPC IP addresses to Pods. Pods are directly routable in the VPC" },
+        { "num": 64, "front": "VPC CNI prefix delegation?", "back": "Assigns /28 prefixes instead of individual IPs to ENIs — increases Pod density per node (110+ Pods)" },
+        { "num": 65, "front": "What is the AWS Load Balancer Controller?", "back": "Provisions ALBs for Ingress and NLBs for LoadBalancer Services — replaces legacy in-tree cloud provider" },
+        { "num": 66, "front": "EKS add-ons?", "back": "AWS-managed operational software — VPC CNI, CoreDNS, kube-proxy, EBS CSI driver. Updated via EKS API" },
+        { "num": 67, "front": "EKS cluster endpoint access?", "back": "Public (API accessible from internet), Private (VPC only), or Public+Private (public with private routing for nodes)" },
+        { "num": 68, "front": "How does EKS auth work?", "back": "IAM authenticates (aws-iam-authenticator), K8s RBAC authorizes. aws-auth ConfigMap or EKS access entries map IAM to K8s identities" },
+        { "num": 69, "front": "What are EKS access entries?", "back": "Newer API-based auth (replaces aws-auth ConfigMap) — maps IAM principals to K8s groups/permissions directly" },
+        { "num": 70, "front": "EKS upgrade strategy?", "back": "Control plane upgraded first (in-place, managed by AWS), then node groups. One minor version at a time" },
+        { "num": 71, "front": "What is Karpenter?", "back": "Open-source node autoscaler — provisions right-sized EC2 instances directly (not ASG-based). Faster than Cluster Autoscaler" },
+        { "num": 72, "front": "Cluster Autoscaler vs Karpenter?", "back": "CA scales ASG node groups (predefined instance types). Karpenter provisions optimal instances per Pod requirements — more flexible, faster" },
+        { "num": 73, "front": "What is eksctl?", "back": "CLI tool to create and manage EKS clusters — wraps CloudFormation. Good for quick setup, not for production IaC" },
+        { "num": 74, "front": "EKS pricing?", "back": "$0.10/hour per cluster ($73/mo) for control plane + EC2/Fargate costs for worker nodes" },
+        { "num": 75, "front": "What is EKS Anywhere?", "back": "Run EKS on your own infrastructure (on-prem, VMs) — same K8s distribution and tooling as cloud EKS" }
+      ]
+    },
+    {
+      "name": "Scaling & Scheduling",
+      "cards": [
+        { "num": 76, "front": "What is HPA?", "back": "Horizontal Pod Autoscaler — scales Pod replicas based on CPU, memory, or custom metrics" },
+        { "num": 77, "front": "What is VPA?", "back": "Vertical Pod Autoscaler — adjusts Pod CPU/memory requests based on actual usage. Can conflict with HPA" },
+        { "num": 78, "front": "What are resource requests?", "back": "Minimum CPU/memory guaranteed to a container — used by scheduler for placement decisions" },
+        { "num": 79, "front": "What are resource limits?", "back": "Maximum CPU/memory a container can use — CPU is throttled, memory over-limit causes OOMKill" },
+        { "num": 80, "front": "QoS classes?", "back": "Guaranteed (requests=limits), Burstable (requests<limits), BestEffort (no requests/limits). Eviction order: BestEffort first" },
+        { "num": 81, "front": "What are taints and tolerations?", "back": "Taints repel Pods from nodes. Tolerations on Pods allow scheduling on tainted nodes. Used for dedicated/GPU nodes" },
+        { "num": 82, "front": "What is node affinity?", "back": "Rules that constrain which nodes a Pod can schedule on — based on node labels (required or preferred)" },
+        { "num": 83, "front": "What is Pod affinity/anti-affinity?", "back": "Schedule Pods together (affinity) or apart (anti-affinity) based on labels — e.g. spread across AZs" },
+        { "num": 84, "front": "What is a PodDisruptionBudget?", "back": "Limits voluntary disruptions — ensures minAvailable or maxUnavailable Pods during drains, upgrades, scaling" },
+        { "num": 85, "front": "What is topology spread?", "back": "topologySpreadConstraints distribute Pods evenly across zones, nodes, or other topology domains" },
+        { "num": 86, "front": "What is a LimitRange?", "back": "Sets default and max resource requests/limits per container in a namespace" },
+        { "num": 87, "front": "What is a ResourceQuota?", "back": "Limits total resource consumption (CPU, memory, object count) per namespace" }
+      ]
+    },
+    {
+      "name": "Observability",
+      "cards": [
+        { "num": 88, "front": "What are liveness probes?", "back": "Checks if container is alive — restarts container on failure. HTTP GET, TCP socket, or exec command" },
+        { "num": 89, "front": "What are readiness probes?", "back": "Checks if container can serve traffic — removes Pod from Service endpoints on failure" },
+        { "num": 90, "front": "What are startup probes?", "back": "Checks if container has started — disables liveness/readiness until success. For slow-starting apps" },
+        { "num": 91, "front": "What is CloudWatch Container Insights?", "back": "EKS monitoring — collects metrics (CPU, memory, network) and logs from nodes and Pods via CloudWatch agent" },
+        { "num": 92, "front": "What is Amazon Managed Prometheus?", "back": "Managed Prometheus-compatible monitoring — scrapes K8s metrics, stores in AWS, query with PromQL" },
+        { "num": 93, "front": "What is Fluent Bit on EKS?", "back": "Lightweight log forwarder — ships container logs to CloudWatch, S3, OpenSearch. Common EKS logging pattern" },
+        { "num": 94, "front": "kubectl logs vs kubectl describe?", "back": "logs: container stdout/stderr. describe: events, conditions, resource details — use describe for scheduling/startup issues" },
+        { "num": 95, "front": "What is metrics-server?", "back": "Cluster add-on that collects resource metrics from kubelets — required for HPA and kubectl top" },
+        { "num": 96, "front": "How to enable Traefik access logs in k3s?", "back": "Create a HelmChartConfig in /var/lib/rancher/k3s/server/manifests/ with logs.access.enabled: true" },
+        { "num": 97, "front": "How to view Traefik access logs?", "back": "kubectl logs -n kube-system -l app.kubernetes.io/name=traefik -f" },
+        { "num": 98, "front": "What do Traefik access logs show?", "back": "Client IP, timestamp, method, path, status code, response size, matched ingress route, backend Pod, and response time" },
+        { "num": 99, "front": "What is a HelmChartConfig in k3s?", "back": "CRD that overrides values for k3s-managed Helm charts (Traefik, CoreDNS) — placed in the server manifests directory" },
+        { "num": 100, "front": "How to add Let's Encrypt TLS to Traefik in k3s?", "back": "Add ACME cert resolver via additionalArguments in HelmChartConfig — set email, storage path, and httpChallenge entrypoint" },
+        { "num": 101, "front": "How to redirect HTTP to HTTPS in Traefik?", "back": "Create a Middleware CRD with redirectScheme (scheme: https, permanent: true) and a separate Ingress for the web entrypoint that references it" },
+        { "num": 102, "front": "What is a 308 Permanent Redirect?", "back": "HTTP status code that permanently redirects while preserving the request method (unlike 301 which may change POST to GET)" }
+      ]
+    },
+    {
+      "name": "Troubleshooting",
+      "cards": [
+        { "num": 103, "front": "Pod stuck in Pending?", "back": "Insufficient resources, no matching nodes (taints/affinity), PVC not bound, or ResourceQuota exceeded. Check kubectl describe pod" },
+        { "num": 104, "front": "Pod in CrashLoopBackOff?", "back": "Container starts and crashes repeatedly — check kubectl logs. Common: wrong command, missing config, OOMKilled, failing health check" },
+        { "num": 105, "front": "Pod in ImagePullBackOff?", "back": "Can't pull container image — wrong image name/tag, missing registry credentials, or network issue" },
+        { "num": 106, "front": "Service not routing traffic?", "back": "Check selector matches Pod labels, Pod is Ready, endpoints exist (kubectl get endpoints). Check NetworkPolicy" },
+        { "num": 107, "front": "Node NotReady?", "back": "kubelet not running, resource pressure (disk/memory/PID), or network issues. Check kubectl describe node and kubelet logs" },
+        { "num": 108, "front": "OOMKilled?", "back": "Container exceeded memory limit — increase limits, fix memory leak, or tune JVM/runtime heap settings" },
+        { "num": 109, "front": "exec format error?", "back": "Image architecture mismatch — e.g. arm64 image on amd64 node. Build with --platform linux/amd64" },
+        { "num": 110, "front": "How to debug a running Pod?", "back": "kubectl exec -it pod -- sh. Or kubectl debug for ephemeral containers on distroless images" },
+        { "num": 111, "front": "How to check Pod resource usage?", "back": "kubectl top pod (requires metrics-server). For historical data use Prometheus/CloudWatch" }
+      ]
+    },
+    {
+      "name": "Helm & GitOps",
+      "cards": [
+        { "num": 112, "front": "What is Helm?", "back": "Package manager for K8s — charts are templated YAML bundles. Install, upgrade, rollback releases" },
+        { "num": 113, "front": "Helm chart structure?", "back": "Chart.yaml (metadata), values.yaml (defaults), templates/ (K8s manifests with Go templating)" },
+        { "num": 114, "front": "helm upgrade --install?", "back": "Idempotent deploy — installs if release doesn't exist, upgrades if it does" },
+        { "num": 115, "front": "What is ArgoCD?", "back": "GitOps controller — watches a Git repo and syncs K8s cluster state to match. Declarative, auditable deployments" },
+        { "num": 116, "front": "What is Flux?", "back": "GitOps toolkit by CNCF — reconciles cluster state from Git. Supports Helm, Kustomize, plain YAML" },
+        { "num": 117, "front": "GitOps vs CI/CD push?", "back": "GitOps: cluster pulls desired state from Git (ArgoCD/Flux). Push: CI pipeline applies to cluster (kubectl/helm). GitOps is more auditable" }
+      ]
+    },
+    {
+      "name": "Advanced Concepts",
+      "cards": [
+        { "num": 118, "front": "What is a sidecar container?", "back": "Additional container in a Pod — handles logging, proxying, or config. K8s 1.28+ has native sidecar support" },
+        { "num": 119, "front": "What is an init container?", "back": "Runs before app containers start — used for setup tasks (DB migration, config download). Must complete successfully" },
+        { "num": 120, "front": "What is a CRD?", "back": "Custom Resource Definition — extends the K8s API with your own resource types (e.g. Certificate, VirtualService)" },
+        { "num": 121, "front": "What is an Operator?", "back": "Controller + CRDs that automate complex app lifecycle — e.g. database provisioning, backup, failover" },
+        { "num": 122, "front": "What is a Service Mesh?", "back": "Infrastructure layer for service-to-service communication — mTLS, traffic management, observability. Istio, Linkerd, App Mesh" },
+        { "num": 123, "front": "Rolling update strategy?", "back": "Default Deployment strategy — replaces Pods gradually. maxSurge and maxUnavailable control the pace" },
+        { "num": 124, "front": "Blue/green deployment in K8s?", "back": "Run two Deployments (blue/green), switch Service selector to the new version. Instant rollback by switching back" },
+        { "num": 125, "front": "Canary deployment in K8s?", "back": "Route small % of traffic to new version — via weighted Ingress, Service Mesh, or Argo Rollouts" },
+        { "num": 126, "front": "What is Kustomize?", "back": "Template-free YAML customization — overlays for different environments. Built into kubectl (kubectl apply -k)" },
+        { "num": 127, "front": "What is a finalizer?", "back": "Metadata key that prevents resource deletion until a controller completes cleanup — e.g. PV data deletion" }
+      ]
+    }
+  ]
+}

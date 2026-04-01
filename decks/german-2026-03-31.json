@@ -1,0 +1,150 @@
+{
+  "name": "German (2026-03-31)",
+  "sections": [
+    {
+      "name": "Personen & Alltag",
+      "cards": [
+        { "num": 1, "front": "der Freund", "back": "friend" },
+        { "num": 2, "front": "die Freundin", "back": "female friend or girlfriend" },
+        { "num": 3, "front": "der Nachbar", "back": "neighbor" },
+        { "num": 4, "front": "die Familie", "back": "family" },
+        { "num": 5, "front": "das Kind", "back": "child" },
+        { "num": 6, "front": "der Mann", "back": "man" },
+        { "num": 7, "front": "die Frau", "back": "woman" },
+        { "num": 8, "front": "der Kollege", "back": "colleague" },
+        { "num": 9, "front": "der Lehrer", "back": "teacher" },
+        { "num": 10, "front": "der Schüler", "back": "student or pupil" }
+      ]
+    },
+    {
+      "name": "Zuhause & Orte",
+      "cards": [
+        { "num": 11, "front": "das Haus", "back": "house" },
+        { "num": 12, "front": "die Wohnung", "back": "apartment" },
+        { "num": 13, "front": "das Zimmer", "back": "room" },
+        { "num": 14, "front": "die Küche", "back": "kitchen" },
+        { "num": 15, "front": "das Bad", "back": "bathroom" },
+        { "num": 16, "front": "die Stadt", "back": "city" },
+        { "num": 17, "front": "das Dorf", "back": "village" },
+        { "num": 18, "front": "der Supermarkt", "back": "supermarket" },
+        { "num": 19, "front": "die Schule", "back": "school" },
+        { "num": 20, "front": "das Büro", "back": "office" }
+      ]
+    },
+    {
+      "name": "Essen & Trinken",
+      "cards": [
+        { "num": 21, "front": "das Brot", "back": "bread" },
+        { "num": 22, "front": "der Apfel", "back": "apple" },
+        { "num": 23, "front": "das Wasser", "back": "water" },
+        { "num": 24, "front": "der Kaffee", "back": "coffee" },
+        { "num": 25, "front": "der Tee", "back": "tea" },
+        { "num": 26, "front": "das Frühstück", "back": "breakfast" },
+        { "num": 27, "front": "das Mittagessen", "back": "lunch" },
+        { "num": 28, "front": "das Abendessen", "back": "dinner" },
+        { "num": 29, "front": "das Gemüse", "back": "vegetables" },
+        { "num": 30, "front": "das Obst", "back": "fruit" }
+      ]
+    },
+    {
+      "name": "Verben",
+      "cards": [
+        { "num": 31, "front": "sein", "back": "to be" },
+        { "num": 32, "front": "haben", "back": "to have" },
+        { "num": 33, "front": "gehen", "back": "to go" },
+        { "num": 34, "front": "kommen", "back": "to come" },
+        { "num": 35, "front": "essen", "back": "to eat" },
+        { "num": 36, "front": "trinken", "back": "to drink" },
+        { "num": 37, "front": "schlafen", "back": "to sleep" },
+        { "num": 38, "front": "arbeiten", "back": "to work" },
+        { "num": 39, "front": "lernen", "back": "to learn" },
+        { "num": 40, "front": "sprechen", "back": "to speak" },
+        { "num": 41, "front": "hören", "back": "to hear or listen" },
+        { "num": 42, "front": "sehen", "back": "to see" },
+        { "num": 43, "front": "kaufen", "back": "to buy" },
+        { "num": 44, "front": "bezahlen", "back": "to pay" },
+        { "num": 45, "front": "fragen", "back": "to ask" },
+        { "num": 46, "front": "antworten", "back": "to answer" },
+        { "num": 47, "front": "wohnen", "back": "to live" },
+        { "num": 48, "front": "fahren", "back": "to drive or to go (by vehicle)" },
+        { "num": 49, "front": "bleiben", "back": "to stay" },
+        { "num": 50, "front": "beginnen", "back": "to begin" }
+      ]
+    },
+    {
+      "name": "Adjektive",
+      "cards": [
+        { "num": 51, "front": "gut", "back": "good" },
+        { "num": 52, "front": "schlecht", "back": "bad" },
+        { "num": 53, "front": "groß", "back": "big or tall" },
+        { "num": 54, "front": "klein", "back": "small" },
+        { "num": 55, "front": "alt", "back": "old" },
+        { "num": 56, "front": "jung", "back": "young" },
+        { "num": 57, "front": "schön", "back": "beautiful" },
+        { "num": 58, "front": "schnell", "back": "fast" },
+        { "num": 59, "front": "langsam", "back": "slow" },
+        { "num": 60, "front": "teuer", "back": "expensive" },
+        { "num": 61, "front": "billig", "back": "cheap" },
+        { "num": 62, "front": "freundlich", "back": "friendly" },
+        { "num": 63, "front": "müde", "back": "tired" },
+        { "num": 64, "front": "krank", "back": "sick" },
+        { "num": 65, "front": "gesund", "back": "healthy" }
+      ]
+    },
+    {
+      "name": "Zeit & Alltag",
+      "cards": [
+        { "num": 66, "front": "heute", "back": "today" },
+        { "num": 67, "front": "morgen", "back": "tomorrow" },
+        { "num": 68, "front": "gestern", "back": "yesterday" },
+        { "num": 69, "front": "jetzt", "back": "now" },
+        { "num": 70, "front": "später", "back": "later" },
+        { "num": 71, "front": "früh", "back": "early" },
+        { "num": 72, "front": "spät", "back": "late" },
+        { "num": 73, "front": "immer", "back": "always" },
+        { "num": 74, "front": "oft", "back": "often" },
+        { "num": 75, "front": "manchmal", "back": "sometimes" }
+      ]
+    },
+    {
+      "name": "Fragewörter & wichtige Wörter",
+      "cards": [
+        { "num": 76, "front": "wer", "back": "who" },
+        { "num": 77, "front": "was", "back": "what" },
+        { "num": 78, "front": "wann", "back": "when" },
+        { "num": 79, "front": "wo", "back": "where" },
+        { "num": 80, "front": "warum", "back": "why" },
+        { "num": 81, "front": "wie", "back": "how" },
+        { "num": 82, "front": "wie viel", "back": "how much or how many" },
+        { "num": 83, "front": "wie lange", "back": "how long" },
+        { "num": 84, "front": "weil", "back": "because" },
+        { "num": 85, "front": "und", "back": "and" }
+      ]
+    },
+    {
+      "name": "Einkaufen & Alltag",
+      "cards": [
+        { "num": 86, "front": "der Preis", "back": "price" },
+        { "num": 87, "front": "das Geld", "back": "money" },
+        { "num": 88, "front": "die Kasse", "back": "cash register or checkout" },
+        { "num": 89, "front": "das Geschäft", "back": "shop or store" },
+        { "num": 90, "front": "öffnen", "back": "to open" },
+        { "num": 91, "front": "schließen", "back": "to close" },
+        { "num": 92, "front": "suchen", "back": "to search" },
+        { "num": 93, "front": "finden", "back": "to find" },
+        { "num": 94, "front": "bestellen", "back": "to order" },
+        { "num": 95, "front": "bringen", "back": "to bring" }
+      ]
+    },
+    {
+      "name": "Verkehr & Bewegung",
+      "cards": [
+        { "num": 96, "front": "der Bus", "back": "bus" },
+        { "num": 97, "front": "der Zug", "back": "train" },
+        { "num": 98, "front": "das Auto", "back": "car" },
+        { "num": 99, "front": "die Straße", "back": "street" },
+        { "num": 100, "front": "die Haltestelle", "back": "bus stop" }
+      ]
+    }
+  ]
+}

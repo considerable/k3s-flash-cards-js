@@ -1,0 +1,32 @@
+{{- if and .Values.ingress.enabled .Values.ingress.host }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Chart.Name }}-redirect-https
+  namespace: {{ .Release.Namespace }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-redirect
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Chart.Name }}-redirect-https@kubernetescrd
+spec:
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
+{{- end }}

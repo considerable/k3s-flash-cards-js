@@ -1,0 +1,19 @@
+# GCP e2-small + k3s values
+replicaCount: 2
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  host: flash.YOUR_IP.nip.io
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
