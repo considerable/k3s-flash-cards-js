@@ -108,10 +108,16 @@ flash-cards-js-deployment-74f6b6d956-mmdgl   1/1     Running   17s
 $ curl -s https://flash.YOUR_IP.nip.io/api/decks | python3 -m json.tool
 [
     {
+        "id": "cka-2026-03-31",
+        "slug": "cka",
+        "name": "CKA (2026-03-31)",
+        "count": 120
+    },
+    {
         "id": "eks-2026-03-31",
         "slug": "eks",
-        "name": "EKS & Kubernetes (2026-03-31)",
-        "count": 127
+        "name": "EKS (2026-03-31)",
+        "count": 28
     },
     {
         "id": "german-2026-03-31",
@@ -152,9 +158,10 @@ Each deck gets its own URL based on the filename (date suffix stripped):
 
 | URL | Deck |
 |-----|------|
-| http://flash.YOUR_IP.nip.io/ | Index page with links to all decks |
-| http://flash.YOUR_IP.nip.io/eks | EKS & Kubernetes (127 cards) |
-| http://flash.YOUR_IP.nip.io/german | German (100 cards) |
+| https://flash.YOUR_IP.nip.io/ | Index page with links to all decks |
+| https://flash.YOUR_IP.nip.io/cka | CKA (120 cards) |
+| https://flash.YOUR_IP.nip.io/eks | EKS (28 cards) |
+| https://flash.YOUR_IP.nip.io/german | German (100 cards) |
 
 ### API
 
@@ -220,8 +227,9 @@ flash-cards-js/
 ├── server.js              # Express server + API + slug routing
 ├── public/deck.html       # Frontend (flip card UI + text-to-speech)
 ├── decks/                 # Card decks (JSON)
-│   ├── eks-2026-03-31.json      # Sectioned (127 cards, 10 sections)
-│   └── german-2026-03-31.json   # Sectioned (100 cards, 9 sections)
+│   ├── cka-2026-03-31.json       # Sectioned (120 cards, 10 sections)
+│   ├── eks-2026-03-31.json       # Sectioned (28 cards, 6 sections)
+│   └── german-2026-03-31.json    # Sectioned (100 cards, 9 sections)
 ├── Dockerfile             # Node 22 Alpine, explicit COPY targets
 ├── package.json           # express dependency
 ├── Makefile               # Pipeline: infra → build → load → deploy
