@@ -130,6 +130,7 @@ $ make help
   build        Build Docker image (linux/amd64 for k3s)
   load         Build and load image into k3s node
   deploy       Deploy to k3s with Helm
+  test         Smoke test the live deployment
   all          Full pipeline: infra, build, load, deploy
   clean        Remove local Docker image
 ```
@@ -182,7 +183,7 @@ Best for decks without categories:
 
 ```json
 {
-  "name": "EKS & Kubernetes (2026-03-31)",
+  "name": "EKS (2026-03-31)",
   "cards": [
     { "front": "What is a Pod?", "back": "Smallest deployable unit in k8s" }
   ]
@@ -311,6 +312,7 @@ flowchart TD
 | Seccomp profile | RuntimeDefault |
 | Resource limits | 200m CPU / 128Mi memory |
 | Liveness probe | `GET /healthz` every 10s |
+| Readiness probe | `GET /healthz` every 5s |
 | HTTPS (Let's Encrypt) | ✅ (auto-renewed via Traefik ACME) |
 | HTTP → HTTPS redirect | 308 Permanent Redirect |
 
