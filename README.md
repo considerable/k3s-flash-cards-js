@@ -183,9 +183,9 @@ Best for decks without categories:
 
 ```json
 {
-  "name": "EKS (2026-03-31)",
+  "name": "My Deck",
   "cards": [
-    { "front": "What is a Pod?", "back": "Smallest deployable unit in k8s" }
+    { "front": "Question", "back": "Answer" }
   ]
 }
 ```
