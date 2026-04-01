@@ -59,6 +59,12 @@ make all
 
 This runs `infra` → `build` → `load` → `deploy` in sequence.
 
+Then verify:
+
+```bash
+make test
+```
+
 ### Step by step
 
 ```bash
@@ -105,27 +111,11 @@ NAME                                         READY   STATUS    AGE
 flash-cards-js-deployment-74f6b6d956-gn6q4   1/1     Running   17s
 flash-cards-js-deployment-74f6b6d956-mmdgl   1/1     Running   17s
 
-$ curl -s https://flash.YOUR_IP.nip.io/api/decks | python3 -m json.tool
-[
-    {
-        "id": "cka-2026-03-31",
-        "slug": "cka",
-        "name": "CKA (2026-03-31)",
-        "count": 120
-    },
-    {
-        "id": "eks-2026-03-31",
-        "slug": "eks",
-        "name": "EKS (2026-03-31)",
-        "count": 28
-    },
-    {
-        "id": "german-2026-03-31",
-        "slug": "german",
-        "name": "German (2026-03-31)",
-        "count": 100
-    }
-]
+$ make test
+Testing HTTPS...
+  ✅ /healthz
+  ✅ /api/decks
+  ✅ HTTP→HTTPS redirect
 ```
 
 ### All Makefile targets
