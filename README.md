@@ -413,6 +413,16 @@ The sibling projects use full CI/CD pipelines (GitLab CI for the golang demo, Ci
 - No registry needed — images are loaded directly into the k3s node via `docker save | k3s ctr images import`
 - Easy to wrap into any CI system later — each target maps to a pipeline step
 
+The direct image load works because k3s is a single-node cluster. On multi-node clusters, you'd need a registry (ECR, GHCR, Docker Hub) or load the image on every node.
+
+The import command varies by runtime:
+
+| Runtime | Import command |
+|---------|---------------|
+| k3s (containerd) | `sudo k3s ctr images import -` |
+| containerd (EKS, kubeadm) | `sudo ctr -n k8s.io images import -` |
+| Docker (legacy) | `docker load` |
+
 ## Related Projects
 
 | Project | CI/CD | Language | URL |
