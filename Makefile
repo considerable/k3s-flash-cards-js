@@ -6,7 +6,7 @@ HELM_RELEASE := flash-cards-js
 HELM_CHART   := ./helm/flash-cards-js
 VALUES_GCP   := $(HELM_CHART)/values-gcp.yaml
 
-.PHONY: help tf-init tf-import tf-plan build load deploy all clean
+.PHONY: help tf-init tf-import tf-plan build load deploy test all clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -36,6 +36,13 @@ deploy: ## Deploy to k3s with Helm
 		-f $(VALUES_GCP) \
 		--set image.repository=$(IMAGE) \
 		--set image.tag=$(TAG)
+
+# --- Test ---
+test: ## Smoke test the live deployment
+	@echo "Testing HTTPS..."
+	@curl -sf https://flash.YOUR_IP.nip.io/healthz | grep -q ok && echo "  ✅ /healthz"
+	@curl -sf https://flash.YOUR_IP.nip.io/api/decks | grep -q eks && echo "  ✅ /api/decks"
+	@curl -sI http://flash.YOUR_IP.nip.io/ 2>&1 | grep -q 308 && echo "  ✅ HTTP→HTTPS redirect"
 
 # --- Combos ---
 all: infra build load deploy ## Full pipeline: infra, build, load, deploy

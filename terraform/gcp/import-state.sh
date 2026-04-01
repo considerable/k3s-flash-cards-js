@@ -1,29 +1,42 @@
 #!/bin/bash
-# Import Terraform state from k3s-gitlabci-golang-demo
-# This avoids recreating existing GCP resources
+# Import existing GCP resources into Terraform state
+# Run this once when setting up the project — resources already exist in GCP
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SOURCE_STATE="$(cd "$SCRIPT_DIR/../../../k3s-gitlabci-golang-demo/terraform/gcp" && pwd)/terraform.tfstate"
+cd "$(dirname "$0")"
 
-if [ ! -f "$SOURCE_STATE" ]; then
-  echo "❌ Source statefile not found: $SOURCE_STATE"
-  echo "   Make sure k3s-gitlabci-golang-demo/terraform/gcp/terraform.tfstate exists"
-  exit 1
-fi
-
-cd "$SCRIPT_DIR"
+PROJECT="YOUR_GCP_PROJECT"
+ZONE="us-east1-b"
 
 echo "🔧 Initializing Terraform..."
 terraform init
 
-echo "📋 Copying statefile from k3s-gitlabci-golang-demo..."
-cp "$SOURCE_STATE" ./terraform.tfstate
+echo "📋 Importing GCP resources into Terraform state..."
 
-echo "✅ State imported. Running plan to verify..."
+terraform import -var="project_id=$PROJECT" -var="zone=$ZONE" \
+  google_compute_instance.k3s_node \
+  "projects/$PROJECT/zones/$ZONE/instances/k3s-node" 2>/dev/null || echo "  ↳ k3s_node already in state"
+
+terraform import -var="project_id=$PROJECT" -var="zone=$ZONE" \
+  google_compute_firewall.allow_http_https \
+  "projects/$PROJECT/global/firewalls/allow-http-https" 2>/dev/null || echo "  ↳ allow_http_https already in state"
+
+terraform import -var="project_id=$PROJECT" -var="zone=$ZONE" \
+  google_compute_firewall.allow_k3s_api \
+  "projects/$PROJECT/global/firewalls/allow-k3s-api" 2>/dev/null || echo "  ↳ allow_k3s_api already in state"
+
+terraform import -var="project_id=$PROJECT" -var="zone=$ZONE" \
+  google_compute_firewall.allow_ssh \
+  "projects/$PROJECT/global/firewalls/allow-ssh" 2>/dev/null || echo "  ↳ allow_ssh already in state"
+
+terraform import -var="project_id=$PROJECT" -var="zone=$ZONE" \
+  google_compute_firewall.allow_nodeports \
+  "projects/$PROJECT/global/firewalls/allow-nodeports" 2>/dev/null || echo "  ↳ allow_nodeports already in state"
+
+echo ""
+echo "✅ Import complete. Verifying with plan..."
 terraform plan
 
 echo ""
 echo "If plan shows no changes, the import was successful."
-echo "You can now manage this infrastructure from this project."

@@ -14,12 +14,8 @@ provider "google" {
   zone    = var.zone
 }
 
-# Import state from the existing k3s-gitlabci-golang-demo terraform
-# Run: terraform init
-# Then: terraform import google_compute_instance.k3s_node projects/<project>/zones/<zone>/instances/k3s-node
-#
-# Or copy the statefile:
-#   cp ../k3s-gitlabci-golang-demo/terraform/gcp/terraform.tfstate .
+# Import existing GCP resources into Terraform state:
+#   chmod +x import-state.sh && ./import-state.sh
 
 data "google_compute_default_service_account" "default" {}
 

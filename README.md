@@ -185,7 +185,7 @@ Best for decks without categories:
 
 ```json
 {
-  "name": "Kubernetes",
+  "name": "EKS & Kubernetes (2026-03-31)",
   "cards": [
     { "front": "What is a Pod?", "back": "Smallest deployable unit in k8s" }
   ]
@@ -257,13 +257,13 @@ Terraform manages a single GCP Compute Engine VM running k3s. The infrastructure
 
 ### Importing State
 
-Since the k3s node already exists (created by the golang demo), the terraform state is imported rather than creating new resources:
+Since the k3s node already exists, the terraform state is imported directly from GCP rather than creating new resources:
 
 ```bash
 make infra
 ```
 
-This runs `import-state.sh` (copies `terraform.tfstate` from `../k3s-gitlabci-golang-demo/terraform/gcp/`) then `terraform plan` to verify no drift.
+This runs `import-state.sh` (imports each GCP resource via `terraform import`) then `terraform plan` to verify no drift. Safe to run multiple times — already-imported resources are skipped.
 
 ### Kubeconfig
 
