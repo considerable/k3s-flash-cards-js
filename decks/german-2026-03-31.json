@@ -66,7 +66,7 @@
         { "num": 45, "front": "fragen", "back": "to ask" },
         { "num": 46, "front": "antworten", "back": "to answer" },
         { "num": 47, "front": "wohnen", "back": "to live" },
-        { "num": 48, "front": "fahren", "back": "to drive or to go (by vehicle)" },
+        { "num": 48, "front": "fahren", "back": "to drive or to go (by transportation)" },
         { "num": 49, "front": "bleiben", "back": "to stay" },
         { "num": 50, "front": "beginnen", "back": "to begin" }
       ]
