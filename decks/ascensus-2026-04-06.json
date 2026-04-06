@@ -1,0 +1,160 @@
+{
+  "name": "Ascensus (2026-04-06)",
+  "sections": [
+    {
+      "name": "Ascensus & Role",
+      "cards": [
+        {
+          "num": 1,
+          "front": "What is Ascensus and why does it matter for your pitch?",
+          "back": "Largest independent retirement plan recordkeeper in the US.\n$932 billion assets under administration.\n16 million savers — 401k, IRA, HSA, 529, ABLE accounts.\n~5,500 employees, HQ Dresher PA, Newark NJ hybrid (3 days/week).\nPrivately held — Genstar Capital + Aquiline Capital Partners.\nRegulated: SOC 2, ERISA, financial data privacy.\n\nWhy it matters: $932B AUM = production reliability is non-negotiable. Retirement savings data is as sensitive as healthcare data. Lead with financial services depth.",
+          "link": "https://www.ascensus.com"
+        },
+        {
+          "num": 2,
+          "front": "Your 60-second opening for Ascensus",
+          "back": "\"Ascensus gets a cloud engineer who's operated at financial-services scale for 20 years — S&P Global, DTCC, MarkitSERV, Fiserv. I understand what it means when the platform handles retirement savings for 16 million people: 99.9% uptime isn't a goal, it's a baseline. At Fiserv I architected multi-region AWS infrastructure for a Fortune 500 fintech — active-active-active across 3 regions, automated failover, SOC 2 compliance built into the IaC. That's the standard I'd bring to your platform.\"",
+          "link": "https://careers.ascensus.com"
+        },
+        {
+          "num": 3,
+          "front": "Your financial services depth — map to Ascensus",
+          "back": "Fiserv/Clover (2024-2026) — Fortune 500 fintech, SOC 2, multi-region AWS → same compliance weight\nS&P Global (2002-2006) — financial data, trading systems, CISA training → regulatory compliance\nDTCC (2011) — post-trade clearing/settlement, security auditing → regulated financial infrastructure\nMarkitSERV (2010) — derivatives trade processing, 24x7 HA → financial transaction uptime\nVA.gov (2021-2023) — FedRAMP High, 9M users, automated compliance → ERISA/SOC 2 automation pattern\n\nHope frame: \"I've never worked somewhere where the data wasn't real money or real lives. Ascensus is both.\"",
+          "link": "https://www.ascensus.com/about"
+        }
+      ]
+    },
+    {
+      "name": "AWS Architecture",
+      "cards": [
+        {
+          "num": 4,
+          "front": "Multi-region AWS — your Fiserv story",
+          "back": "Active-active-active across 3 regions (us-east-1, us-east-2, us-west-2).\nSingle region failure = 33% capacity reduction, not 100% outage.\nRoute 53 health checks + weighted routing for automated failover.\nOracle RDS cross-region read replicas with automated promotion.\n99.9% uptime for millions of financial transactions.\nChaos engineering via AWS FIS — black-out (100%) and brown-out (50%) scenarios.\nTracked P95/P99 response times across failure modes.\n\nFor Ascensus: retirement account processing needs the same pattern — a participant checking their 401k balance at 9am can't get a 503.",
+          "link": "https://docs.aws.amazon.com/whitepapers/latest/aws-multi-region-fundamentals/aws-multi-region-fundamentals.html"
+        },
+        {
+          "num": 5,
+          "front": "AWS services to mention naturally — Ascensus context",
+          "back": "Compute: EC2, ECS/Fargate, EKS, Lambda\nStorage: S3, EBS, RDS (Oracle, PostgreSQL), DynamoDB\nNetworking: VPC, Route 53, Direct Connect, PrivateLink, Transit Gateway, ALB/NLB\nSecurity: IAM, KMS, Secrets Manager, GuardDuty, Security Hub, CloudTrail, Config\nGovernance: Control Tower, Organizations, AWS SSO\nObservability: CloudWatch, X-Ray, Grafana, Datadog, Dynatrace\nMigration: MGN (Application Migration Service), DMS, S3 sync, DataSync\nCost: Cost Explorer, Budgets, Savings Plans, Reserved Instances",
+          "link": "https://aws.amazon.com/products/"
+        },
+        {
+          "num": 6,
+          "front": "Complex AWS migration — your VA.gov story",
+          "back": "Strangler Fig pattern: monolith ECS/Fargate → microservices EKS.\nAWS MGN for lift-and-shift of legacy services.\nDMS for database migration with minimal downtime.\n12-factor app methodology for cloud-native refactor.\nZero downtime — veterans couldn't lose access to benefits during migration.\n500+ servers converted to Terraform code.\n\nFor Ascensus: legacy recordkeeping systems migrating to cloud-native — same pattern. MGN + DMS + Strangler Fig = low-risk migration path.",
+          "link": "https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html"
+        },
+        {
+          "num": 7,
+          "front": "AWS networking fundamentals — what Ascensus will probe",
+          "back": "VPC design: public/private subnets, NAT Gateway, Internet Gateway\nDirect Connect: dedicated private connectivity from on-prem to AWS\nPrivateLink: expose services privately without internet routing\nTransit Gateway: hub-and-spoke for multi-VPC / multi-account connectivity\nVPN: site-to-site for hybrid connectivity\nRoute 53: DNS, health checks, geoproxy, failover routing\nALB/NLB: application vs network load balancing\nSecurity Groups + NACLs: stateful vs stateless filtering\n\nFor Ascensus: on-prem recordkeeping systems connect to AWS via Direct Connect — no participant PII over public internet.",
+          "link": "https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html"
+        },
+        {
+          "num": 8,
+          "front": "Control Tower + Organizations — multi-account governance",
+          "back": "AWS Organizations: group accounts into OUs (prod, dev, sandbox, security)\nControl Tower: landing zone with guardrails — preventive (SCPs) and detective (Config rules)\nAWS SSO (Identity Center): single sign-on across all accounts\nService Control Policies: enforce encryption, block public S3, require MFA\nAccount Vending Machine: automated new account provisioning\n\nFor Ascensus: $932B AUM = multiple business units, multiple environments. Control Tower ensures every account inherits baseline security — no one can accidentally create a public S3 bucket with participant data.",
+          "link": "https://docs.aws.amazon.com/controltower/latest/userguide/what-is-control-tower.html"
+        }
+      ]
+    },
+    {
+      "name": "IaC & FinOps",
+      "cards": [
+        {
+          "num": 9,
+          "front": "Terraform at Lead Expert level",
+          "back": "Modules for reusability — teams consume, don't reinvent.\nRemote state in S3 + DynamoDB locking — no state conflicts.\nWorkspaces for environment separation (dev/staging/prod).\nterraform plan in CI/CD — no surprises in prod.\nSentinel / OPA policies for compliance guardrails.\nDrift detection — terraform plan catches manual changes.\n\nVA.gov: 500+ servers as Terraform code.\nFiserv: multi-region ECS + RDS provisioned via Terraform + CDK.\n\nFor Ascensus: IaC means every environment is reproducible, auditable, and compliant by default.",
+          "link": "https://developer.hashicorp.com/terraform/language/modules"
+        },
+        {
+          "num": 10,
+          "front": "FinOps — explicitly required in the JD",
+          "back": "What FinOps means in practice:\n- Reserved Instances + Savings Plans for predictable workloads (35% cost reduction at Fiserv)\n- Spot instances with on-demand fallback for batch/non-critical\n- Cost allocation tagging by team/product/environment\n- Show-back model: each team sees their cloud spend\n- Cost Explorer + Budgets with anomaly alerts\n- Right-sizing via Compute Optimizer\n- K8s resource quotas — prevent runaway pod costs\n- Auto-termination for dev/test environments\n\nFor Ascensus: retirement platform has predictable load patterns (end-of-year 401k contributions, tax season) — Reserved Instances are a natural fit.",
+          "link": "https://aws.amazon.com/aws-cost-management/"
+        },
+        {
+          "num": 11,
+          "front": "CI/CD pipeline design — your Fiserv story",
+          "back": "GitLab CI pipeline:\n1. Build → multi-region Docker image (linux/amd64)\n2. SAST scan (code vulnerabilities)\n3. DAST scan (runtime vulnerabilities)\n4. Push to ECR in all 3 regions simultaneously\n5. Deploy to ECS/Fargate via CDK/CloudFormation\n6. Smoke tests + health check validation\n7. Rollback on failure\n\nResult: 60% deployment time reduction. Developers self-serve — no manual steps.\n\nFor Ascensus: same pattern for recordkeeping services — automated, auditable, compliant deployments.",
+          "link": "https://docs.gitlab.com/ee/ci/"
+        }
+      ]
+    },
+    {
+      "name": "Security & Compliance",
+      "cards": [
+        {
+          "num": 12,
+          "front": "Compliance automation — your core angle",
+          "back": "\"Compliance controls are infrastructure code, not manual checklists.\"\n\nTerraform enforces:\n- Encryption at rest (KMS) — every S3 bucket, RDS instance, EBS volume\n- IAM least privilege — no wildcard policies, no long-lived credentials\n- VPC private subnets — no public endpoints for data services\n- CloudTrail enabled in every region — full audit trail\n\nAWS Config rules detect drift — alert if someone disables encryption manually.\nAuditors get automated reports, not spreadsheets.\n\nSOC 2 at Fiserv. FedRAMP High at VA.gov (stricter than SOC 2). HIPAA at Cambia.\nERISA compliance at Ascensus = same automation pattern.",
+          "link": "https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config.html"
+        },
+        {
+          "num": 13,
+          "front": "Security tools — JD requires familiarity",
+          "back": "CrowdStrike — endpoint detection and response (EDR). Familiar.\nCASB — Cloud Access Security Broker, controls SaaS app access. Familiar.\nRapid7 InsightVM — vulnerability scanning and management. Familiar.\nCyberArk / Centrify — privileged access management (PAM). Familiar.\nIBM qRadar SIEM — security event correlation. Production at Mosaic451.\nSSO/MFA — SAML, OAuth, OIDC. VA.gov Zero Trust RFC (Keycloak SSO).\n\nIf asked: \"I've integrated with these tools rather than administered them daily — I understand the data flows, API integrations, and how they fit into a Zero Trust architecture.\"",
+          "link": "https://docs.aws.amazon.com/security-hub/latest/userguide/what-is-securityhub.html"
+        },
+        {
+          "num": 14,
+          "front": "Identity — AD, EntraID, AWS IAM",
+          "back": "Microsoft Active Directory: on-prem identity, group policies, LDAP.\nAzure Entra ID (formerly AAD): cloud identity, conditional access, MFA.\nAWS IAM Identity Center (SSO): federate EntraID → AWS accounts via SAML/OIDC.\nIRSA: IAM Roles for Service Accounts — pod-level AWS permissions in K8s.\nAmazon Workspace: VDI for remote workers — familiar with deployment basics.\n\nFor Ascensus: hybrid identity pattern — on-prem AD synced to Entra ID, federated into AWS via Identity Center. Employees get SSO to AWS console + applications.",
+          "link": "https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html"
+        }
+      ]
+    },
+    {
+      "name": "Kubernetes & Containers",
+      "cards": [
+        {
+          "num": 15,
+          "front": "Kubernetes at scale — your VA.gov story",
+          "back": "100+ microservices on EKS at VA.gov.\nArgoCD app-of-apps GitOps — teams deploy independently.\nHelm charts + Kustomize overlays per environment.\nIRSA for pod-level AWS permissions — no shared credentials.\nHPA + VPA autoscaling — handled COVID traffic surge.\nPodDisruptionBudgets — zero downtime upgrades.\nZero Trust RFC 002: Traefik EE + Keycloak SSO at ingress layer.\n\nFor Ascensus: retirement platform microservices (participant portal, recordkeeping API, compliance reporting) need the same patterns — independent deployability, no shared blast radius.",
+          "link": "https://kubernetes.io/docs/concepts/workloads/"
+        },
+        {
+          "num": 16,
+          "front": "ECS/Fargate vs EKS — when to use which",
+          "back": "ECS/Fargate:\n- Simpler ops — no control plane to manage\n- AWS-native, tight CloudFormation/CDK integration\n- Good for: microservices with predictable scaling, Java Spring Boot apps\n- Used at Fiserv for merchant acquiring platform\n\nEKS:\n- Full Kubernetes API — portable, ecosystem-rich\n- More operational complexity but more control\n- Good for: large microservices platforms, multi-team, GitOps\n- Used at VA.gov for 100+ microservices\n\nFor Ascensus: depends on current state. If greenfield → ECS/Fargate for simplicity. If existing K8s investment → EKS. Either way, IaC + GitOps principles are the same.",
+          "link": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+        }
+      ]
+    },
+    {
+      "name": "Leadership & Mentoring",
+      "cards": [
+        {
+          "num": 17,
+          "front": "Lead Engineer — what it means in practice",
+          "back": "\"A lead's job is to make the team better, not just do the work.\"\n\nAt VA.gov: co-authored Zero Trust RFC 002 — adopted as platform standard for 9M-user federal system. One RFC = every team benefits.\n\nAt Fiserv: Terraform module library — teams consumed modules without reinventing. Shared GitLab CI templates — no team wrote their own pipeline from scratch.\n\nMentoring: code reviews, architecture reviews, SOPs so the team operates without me in the room.\n\nFor Ascensus: Lead = platform standards + team elevation. Not a senior engineer who does everything alone.",
+          "link": "https://aws.amazon.com/architecture/well-architected/"
+        },
+        {
+          "num": 18,
+          "front": "AWS certification gap — how to handle it",
+          "back": "JD requires AWS Professional certification.\n\nYour answer:\n\"I hold Platform Engineering Fundamentals (2024) and have 20 years AWS production experience — first at CheetahMail/Experian in 2006. I'm actively pursuing CKA. Vendor certs expire every 2-3 years — my track record at VA.gov (FedRAMP High, the strictest AWS compliance framework) and Fiserv (SOC 2, multi-region, chaos engineering) demonstrates the depth more concretely than a badge I passed last month.\"\n\nWhy it works: honest, has a plan, reframes experience vs cert.",
+          "link": "https://aws.amazon.com/certification/"
+        }
+      ]
+    },
+    {
+      "name": "Questions & Numbers",
+      "cards": [
+        {
+          "num": 19,
+          "front": "Questions to ask Ascensus",
+          "back": "1. \"What does the current AWS infrastructure look like — single account, multi-account org, or landing zone pattern?\"\n2. \"What's the biggest reliability or compliance challenge on the platform today?\"\n3. \"How mature is the IaC adoption — are teams using Terraform modules or still doing ClickOps?\"\n4. \"What does the on-call model look like for the cloud engineering team?\"\n5. \"What does success look like in the first 90 days for this role?\"",
+          "link": "https://careers.ascensus.com"
+        },
+        {
+          "num": 20,
+          "front": "Key numbers — have ready",
+          "back": "20 years AWS (2006-2026)\n$932B AUM — Ascensus scale (shows homework done)\n99.9% uptime — Fiserv (3 regions, active-active-active)\n99.95% uptime — VA.gov (9M users)\n100+ microservices — VA.gov EKS\n500+ servers as Terraform code — VA.gov\n60% deployment time reduction — Fiserv CI/CD\n35% cost reduction — Fiserv FinOps\n10+ years Terraform\n6+ years Kubernetes\nSOC 2 (Fiserv) · FedRAMP High (VA.gov) · HIPAA (Cambia)",
+          "link": "https://www.ascensus.com"
+        }
+      ]
+    }
+  ]
+}

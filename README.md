@@ -470,6 +470,52 @@ The import command varies by runtime:
 | containerd (EKS, kubeadm) | `sudo ctr -n k8s.io images import -` |
 | Docker (legacy) | `docker load` |
 
+## IDE Integration (VS Code + Copilot / Amazon Q)
+
+Two AI assistants are configured for this project. Both know the deploy workflow, the linux/amd64 constraint, and the no-registry pattern — so neither will suggest `docker push`.
+
+### `.github/copilot-instructions.md` — GitHub Copilot
+
+Tells GitHub Copilot what this project is and how it deploys.
+
+### `.amazonq/rules/deploy.md` — Amazon Q Developer
+
+Equivalent rules file for Amazon Q Developer (AWS IDE plugin). Amazon Q reads all `.md` files under `.amazonq/rules/` and applies them as workspace context to every chat and inline completion request.
+
+Both files contain the same core knowledge:
+- Image must be built `--platform linux/amd64` (k3s node is x86, not ARM)
+- Deploy workflow is always: `make build` → `make load` → `make deploy`
+- Adding a new deck = drop a JSON file in `decks/`, then `make load deploy` — no code changes
+- `CACHE_BUST=$(date +%s)` is required so k3s picks up new deck content
+- kubeconfig is at `~/.kube/k3s-gcp.yaml`
+- No registry — images load directly into k3s via SSH pipe
+
+### `.vscode/tasks.json` — VS Code Tasks
+
+Exposes every Makefile target as a named VS Code task. Run them via `Cmd+Shift+P` → **Tasks: Run Task**, or press `Cmd+Shift+B` to trigger the default build task (`make all`). Works with both Copilot and Amazon Q.
+
+| Task | Makefile target | What it does |
+|------|-----------------|--------------|
+| `build` | `make build` | Build linux/amd64 Docker image |
+| `load` | `make load` | Build + SSH-pipe image into k3s node |
+| `deploy` | `make deploy` | Helm upgrade --install to k3s |
+| `build → load → deploy` | `make all` | Full pipeline (**default build task**) |
+| `test` | `make test` | Smoke test /healthz, /api/decks, redirect |
+| `clean` | `make clean` | Remove local Docker image |
+
+### Adding a new deck (ask either AI assistant)
+
+```bash
+# 1. Drop JSON file in decks/
+cp my-new-deck.json decks/
+
+# 2. Ask Copilot or Amazon Q: "deploy the new deck" — both will suggest:
+make load deploy
+
+# 3. Verify
+make test
+```
+
 ## Related Projects
 
 | Project | CI/CD | Language | URL |

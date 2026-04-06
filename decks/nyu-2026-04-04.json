@@ -84,7 +84,7 @@
         {
           "num": 13,
           "front": "Your honest multi-cloud position for NYU",
-          "back": "AWS: 20 years — expert. Used at VA.gov (GovCloud), Fiserv, Mosaic451, Intel, Nike, Cisco.\nAzure: Production at Daimler (IoT Hub telemetry), Intel (ELK), ESCO (migration).\nGCP: K3s app deployed on GCP (live demo available), GKE patterns from Kubernetes depth.\nHope frame: 'Your platform gets 20 years of AWS depth, Azure production experience, and GCP hands-on — without needing a ramp-up period on any of them.'",
+          "back": "AWS: 20 years — expert. Used at VA.gov (GovCloud), Fiserv, Mosaic451, Intel, Nike, Cisco.\nAzure: Production at Daimler (IoT Hub telemetry), Intel (ELK), ESCO (migration).\nGCP: k3s app deployed on GCP (live demo available), GKE patterns from Kubernetes depth.\nHope frame: 'Your platform gets 20 years of AWS depth, Azure production experience, and GCP hands-on — without needing a ramp-up period on any of them.'",
           "link": "https://cloud.google.com/docs"
         },
         {
@@ -177,7 +177,7 @@
         {
           "num": 26,
           "front": "NYU Langone — key facts for the interview",
-          "back": "#1 comprehensive academic medical center (Vizient, 3 consecutive years)\n9 clinical specialties ranked top 5 nationally\n$14.2 billion revenue, 320+ locations in NY and FL\nTempus AI collaboration for cancer care transformation\n$1 billion+ active NIH research awards\n2 tuition-free medical schools\nReports to: Director of Unix Platforms\nTeam: Platform Technologies and Cloud Operations",
+          "back": "#1 comprehensive academic medical center (Vizient, 3 consecutive years)\n9 clinical specialties ranked top 5 nationally\n$14.2 billion revenue, 320+ locations in NY and FL\nTempus AI collaboration for cancer care transformation\n$1 billion+ active NIH research awards\n2 tuition-free medical schools\nRole reports to: Director of Unix Platforms\nTeam: Platform Technologies and Cloud Operations\n\nRound 2 interviewer: Andrew Hunt, Senior Technical Architect\nAt NYU since Apr 2018 (8 yrs). NYU M.S. CS + UC Berkeley BS EECS.\nPrior: Northwestern Mutual Dir of Engineering (revamped K8s/Docker/AWS), OnDeck Sr Director, FreshPlanet Dir Engineering.",
           "link": "https://nyulangone.org/about-us"
         }
       ]
