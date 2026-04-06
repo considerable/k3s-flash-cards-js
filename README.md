@@ -232,6 +232,7 @@ flash-cards-js/
 │       ├── deployment.yaml
 │       ├── service.yaml
 │       ├── ingress.yaml
+│       ├── auth.yaml
 │       └── redirect.yaml
 └── terraform/gcp/         # GCP infrastructure (shared with k3s-gitlabci-golang-demo)
     ├── main.tf            # e2-small VM, firewall rules
@@ -315,6 +316,52 @@ flowchart TD
 | Readiness probe | `GET /healthz` every 5s |
 | HTTPS (Let's Encrypt) | ✅ (auto-renewed via Traefik ACME) |
 | HTTP → HTTPS redirect | 308 Permanent Redirect |
+| Authentication | Traefik BasicAuth (interview decks protected) |
+
+### Authentication
+
+Interview prep decks are protected with Traefik BasicAuth. The German deck and health check are public.
+
+```mermaid
+flowchart TD
+    Browser[Browser] -->|https://*/healthz| PUB[Public Ingress]
+    Browser[Browser] -->|https://*/german| PUB
+    
+    Browser -->|https://*/| AUTH[Protected Ingress]
+
+    AUTH -->|BasicAuth middleware| CHECK{Credentials?}
+    CHECK -->|✅ Valid| SVC[flash-cards-js-service]
+    CHECK -->|❌ Invalid| DENY[401 Unauthorized]
+
+    PUB -->|No auth required| SVC
+    SVC --> P1[Pod 1 :3000]
+    SVC --> P2[Pod 2 :3000]
+
+    style AUTH fill:#2d4059,stroke:#e94560,color:#eee
+    style PUB fill:#2d4059,stroke:#0f3460,color:#eee
+    style DENY fill:#e94560,stroke:#e94560,color:#fff
+    style CHECK fill:#16213e,stroke:#e94560,color:#eee
+```
+
+| Route | Auth |
+|-------|------|
+| `/healthz` | 🔓 Public |
+| `/german` | 🔓 Public |
+| `/api/decks/german*` | 🔓 Public |
+| Everything else (`/`, `/cka`, `/eks`, `/cvs`, ...) | 🔒 BasicAuth |
+
+Credentials are stored in a K8s Secret (not in the repo). The Traefik `basicAuth` middleware reads from the Secret at runtime.
+
+To create or update credentials:
+
+```bash
+export KUBECONFIG=~/.kube/k3s-gcp.yaml
+kubectl create secret generic flash-cards-js-auth \
+  --from-literal=users="$(htpasswd -nb <user> <password>)" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+No redeploy needed — Traefik picks up Secret changes immediately.
 
 Verify the certificate:
 

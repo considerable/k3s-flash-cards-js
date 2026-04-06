@@ -1,4 +1,5 @@
 {{- if .Values.ingress.enabled }}
+# Protected ingress (requires basic auth)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,10 +7,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: {{ .Chart.Name }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Chart.Name }}-basic-auth@kubernetescrd
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
@@ -20,8 +22,48 @@ spec:
     {{- end }}
     http:
       paths:
-      - path: {{ .Values.ingress.path }}
-        pathType: {{ .Values.ingress.pathType }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
+---
+# Public ingress (no auth) for /german and /healthz
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-public
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Chart.Name }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.priority: "100"
+spec:
+  rules:
+  - {{- if .Values.ingress.host }}
+    host: {{ .Values.ingress.host }}
+    {{- end }}
+    http:
+      paths:
+      - path: /german
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
+      - path: /healthz
+        pathType: Exact
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
+      - path: /api/decks/german
+        pathType: Prefix
         backend:
           service:
             name: {{ .Chart.Name }}-service
