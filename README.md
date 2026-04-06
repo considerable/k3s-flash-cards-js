@@ -339,11 +339,19 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY server.js ./
 COPY public/ public/
+ARG CACHE_BUST=1
 COPY decks/ decks/
 EXPOSE 3000
 USER node
 CMD ["node", "server.js"]
 ```
+
+Layer ordering matters:
+- `package.json` + `npm ci` first — only reruns when dependencies change
+- `server.js` and `public/` next — app code changes more often than dependencies
+- `decks/` last with `CACHE_BUST` arg — deck content changes most frequently
+
+The `CACHE_BUST` build arg ensures deck changes are always picked up. Without it, Docker's BuildKit cache may not detect content changes inside files (especially on iCloud Drive paths). The Makefile passes `--build-arg CACHE_BUST=$(date +%s)` to bust the cache on every build.
 
 ### Access Logs
 

@@ -6,6 +6,8 @@ HELM_RELEASE := flash-cards-js
 HELM_CHART   := ./helm/flash-cards-js
 VALUES_GCP   := $(HELM_CHART)/values-gcp.yaml
 
+export KUBECONFIG := $(HOME)/.kube/k3s-gcp.yaml
+
 .PHONY: help tf-init tf-import tf-plan build load deploy test all clean
 
 help: ## Show this help
@@ -25,7 +27,8 @@ infra: tf-import tf-plan ## Import state + verify (no changes expected)
 
 # --- Docker ---
 build: ## Build Docker image (linux/amd64 for k3s)
-	docker build --platform linux/amd64 -t $(IMAGE):$(TAG) .
+	@docker info >/dev/null 2>&1 || (echo "Starting Docker..." && open -a Docker && while ! docker info >/dev/null 2>&1; do sleep 2; done)
+	docker build --platform linux/amd64 --build-arg CACHE_BUST=$$(date +%s) -t $(IMAGE):$(TAG) .
 
 load: build ## Build and load image into k3s node
 	docker save $(IMAGE):$(TAG) | gcloud compute ssh $(K3S_NODE) --zone=$(K3S_ZONE) --command="sudo k3s ctr images import -"
@@ -39,10 +42,11 @@ deploy: ## Deploy to k3s with Helm
 
 # --- Test ---
 test: ## Smoke test the live deployment
-	@echo "Testing HTTPS..."
+	@echo "Testing https://flash.YOUR_IP.nip.io ..."
 	@curl -sf https://flash.YOUR_IP.nip.io/healthz | grep -q ok && echo "  ✅ /healthz"
 	@curl -sf https://flash.YOUR_IP.nip.io/api/decks | grep -q eks && echo "  ✅ /api/decks"
 	@curl -sI http://flash.YOUR_IP.nip.io/ 2>&1 | grep -q 308 && echo "  ✅ HTTP→HTTPS redirect"
+	@echo "" && read -p "Open in browser? [y/N] " ans && [ "$$ans" = "y" ] && open https://flash.YOUR_IP.nip.io || true
 
 # --- Combos ---
 all: infra build load deploy ## Full pipeline: infra, build, load, deploy

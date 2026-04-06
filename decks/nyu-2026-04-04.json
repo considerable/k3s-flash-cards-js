@@ -1,0 +1,239 @@
+{
+  "name": "NYU (2026-04-04)",
+  "sections": [
+    {
+      "name": "Databricks",
+      "cards": [
+        {
+          "num": 1,
+          "front": "What is Databricks and why does NYU Langone use it?",
+          "back": "Unified analytics platform built on Apache Spark. NYU uses it for clinical data analytics, research pipelines, and AI/ML workloads — consistent with their Tempus AI collaboration and $1B+ NIH research. Runs on AWS or Azure. Key components: Delta Lake (storage), Workflows (orchestration), Unity Catalog (governance), MLflow (model registry).",
+          "link": "https://docs.databricks.com/en/introduction/index.html"
+        },
+        {
+          "num": 2,
+          "front": "What is Delta Lake?",
+          "back": "ACID-compliant storage layer on top of S3/ADLS. Adds transactions, versioning, and schema enforcement to data lakes. Bronze → Silver → Gold architecture: Bronze = raw ingested data, Silver = cleaned/conformed, Gold = analytics-ready. Critical for clinical data reliability — no partial writes, full audit history.",
+          "link": "https://docs.delta.io/latest/delta-intro.html"
+        },
+        {
+          "num": 3,
+          "front": "What is Unity Catalog and why does it matter for HIPAA?",
+          "back": "Databricks data governance layer — controls who can access which tables, columns, and rows. Row-level and column-level security for PHI data. Audit logs of all data access. Maps to Zero Trust: least privilege for data, not just infrastructure. Critical for HIPAA compliance — PHI access is logged and controlled centrally.",
+          "link": "https://docs.databricks.com/en/data-governance/unity-catalog/index.html"
+        },
+        {
+          "num": 4,
+          "front": "How do you provision Databricks with Terraform?",
+          "back": "Use the databricks/databricks Terraform provider. Provision workspace, clusters, cluster policies, instance profiles, and Unity Catalog. Example: databricks_cluster resource with autotermination_minutes=30 for cost control, aws_attributes.instance_profile_arn for IAM access to S3. Same IaC patterns as any AWS resource — state in S3, modules for reusability.",
+          "link": "https://registry.terraform.io/providers/databricks/databricks/latest/docs"
+        },
+        {
+          "num": 5,
+          "front": "How do you secure Databricks for HIPAA PHI data?",
+          "back": "Three layers: (1) Network — VPC private subnets, no public endpoints, VPC endpoints for S3 access without internet. (2) Identity — IAM instance profiles (not access keys), Unity Catalog row/column-level security for PHI. (3) Audit — all access logged to CloudWatch, fed into SIEM. Same Zero Trust principles as VA.gov FedRAMP High.",
+          "link": "https://docs.databricks.com/en/security/index.html"
+        },
+        {
+          "num": 6,
+          "front": "How do you control Databricks costs?",
+          "back": "Cluster policies enforcing auto-termination (30 min idle), spot instances with on-demand fallback, cluster size limits per team, tagging for cost allocation by department/research project. CloudWatch alarms on spend anomalies. Same pattern as Kubernetes resource quotas — guardrails that let teams move fast without surprise bills.",
+          "link": "https://docs.databricks.com/en/admin/clusters/policies.html"
+        },
+        {
+          "num": 7,
+          "front": "Databricks Hello World — simplest notebook example",
+          "back": "data = [('patient_001','cardiology',72),('patient_002','oncology',65)]\ndf = spark.createDataFrame(data, ['patient_id','department','age'])\ndf.show()\ndf.write.format('delta').mode('overwrite').save('/tmp/patients')\ndf2 = spark.read.format('delta').load('/tmp/patients')\ndf2.show()\ndf.createOrReplaceTempView('patients')\nspark.sql('SELECT department, AVG(age) FROM patients GROUP BY department').show()\n\nRun free at: community.cloud.databricks.com",
+          "link": "https://community.cloud.databricks.com"
+        },
+        {
+          "num": 8,
+          "front": "How does Databricks fit into NYU's data architecture?",
+          "back": "Sits on top of data lake (S3 or ADLS). Delta Lake provides ACID transactions — clinical data is reliable and versioned. Bronze ingests raw EHR/research data, Silver cleans and conforms it, Gold serves analytics and ML models. Unity Catalog governs PHI access. Workflows orchestrate pipelines. MLflow tracks models for Tempus AI collaboration.",
+          "link": "https://docs.databricks.com/en/introduction/index.html"
+        },
+        {
+          "num": 9,
+          "front": "Databricks on AWS vs Azure — key differences?",
+          "back": "AWS: S3 for storage, IAM instance profiles for access, VPC for networking, EC2 for compute. Azure: ADLS Gen2 for storage, Managed Identity for access, VNet for networking, Azure VMs for compute. Unity Catalog and Delta Lake work identically on both. Terraform provider handles both — different resource attributes per cloud.",
+          "link": "https://docs.databricks.com/en/getting-started/index.html"
+        }
+      ]
+    },
+    {
+      "name": "Multi-Cloud (AWS + Azure + GCP)",
+      "cards": [
+        {
+          "num": 10,
+          "front": "Well-Architected Framework — 6 pillars across all 3 clouds",
+          "back": "1. Operational Excellence: CloudWatch/Azure Monitor/Cloud Operations\n2. Security: IAM+GuardDuty / Defender+Entra ID / Security Command Center\n3. Reliability: Multi-AZ / Availability Zones / Regional failover\n4. Performance: EC2 right-sizing / VM Scale Sets / GKE Autopilot\n5. Cost Optimization: Cost Explorer / Cost Management / Committed Use\n6. Sustainability: Carbon footprint tools on all three",
+          "link": "https://aws.amazon.com/architecture/well-architected/"
+        },
+        {
+          "num": 11,
+          "front": "How do you connect AWS, Azure, and GCP to on-prem?",
+          "back": "Hub-and-spoke model: AWS Transit Gateway or Azure Virtual WAN as hub. Site-to-site VPN or ExpressRoute/Direct Connect for on-prem connectivity. VPC peering between cloud environments. At NYU: on-prem clinical systems (EHR, PACS) connect to cloud via private links — no PHI over public internet. Same pattern I used at VA.gov for GovCloud connectivity.",
+          "link": "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html"
+        },
+        {
+          "num": 12,
+          "front": "AWS IAM vs Azure Entra ID vs GCP IAM — key differences?",
+          "back": "AWS IAM: roles, policies, instance profiles, IRSA for K8s. Azure Entra ID (formerly AAD): users, groups, service principals, Managed Identity for K8s. GCP IAM: service accounts, Workload Identity for K8s. All three support OIDC federation for CI/CD (GitHub Actions). Common pattern: least privilege, no long-lived credentials, audit logs.",
+          "link": "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html"
+        },
+        {
+          "num": 13,
+          "front": "Your honest multi-cloud position for NYU",
+          "back": "AWS: 20 years — expert. Used at VA.gov (GovCloud), Fiserv, Mosaic451, Intel, Nike, Cisco.\nAzure: Production at Daimler (IoT Hub telemetry), Intel (ELK), ESCO (migration).\nGCP: K3s app deployed on GCP (live demo available), GKE patterns from Kubernetes depth.\nHope frame: 'Your platform gets 20 years of AWS depth, Azure production experience, and GCP hands-on — without needing a ramp-up period on any of them.'",
+          "link": "https://cloud.google.com/docs"
+        },
+        {
+          "num": 14,
+          "front": "Multi-cloud Kubernetes — EKS vs AKS vs GKE",
+          "back": "EKS: IAM + IRSA, VPC CNI (real VPC IPs), managed node groups. AKS: Entra ID + Managed Identity, Azure CNI, VMSS node pools. GKE: Google IAM + Workload Identity, VPC-native, Autopilot option. All three: same K8s API, same Helm charts, same ArgoCD GitOps. Differences are in IAM, networking, and storage — handled via Helm values per cloud.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/"
+        }
+      ]
+    },
+    {
+      "name": "Kubernetes",
+      "cards": [
+        {
+          "num": 15,
+          "front": "Your strongest Kubernetes story — Zero Trust RFC",
+          "back": "Co-authored Zero Trust Architecture RFC 002 for VA.gov Kubernetes ingress — Traefik EE + Keycloak SSO. Adopted as platform standard for a 9M-user federal healthcare system. Defines: OIDC authentication at ingress layer, mTLS between services, RBAC per namespace, no direct pod access. Same Zero Trust principles apply to NYU's clinical platform.",
+          "link": "https://github.com/department-of-veterans-affairs/va.gov-platform-architecture/blob/main/rfc/2022/2022-06-15_IET_002_TraefikEE-Keycloak-SSO-on-Kubernetes-Ingress.md"
+        },
+        {
+          "num": 16,
+          "front": "ArgoCD GitOps at scale — VA.gov story",
+          "back": "100+ microservices across multiple teams at VA.gov. ArgoCD app-of-apps pattern — one root Application manages all child Applications. Helm charts with Kustomize overlays per environment. Shared GitLab CI templates so teams don't reinvent pipelines. Result: teams deploy independently, platform team doesn't become a bottleneck. Same pattern NYU needs for multi-team clinical platform.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/"
+        },
+        {
+          "num": 17,
+          "front": "Kubernetes for healthcare — what's different?",
+          "back": "Same K8s, higher stakes. Key additions: (1) NetworkPolicy default-deny — PHI can't leak between namespaces. (2) PodSecurityAdmission — no root containers, read-only root filesystem. (3) Audit logging — all API server calls logged for HIPAA. (4) Secrets via Vault/External Secrets — PHI credentials never in etcd plaintext. (5) PodDisruptionBudgets — clinical apps can't go down during upgrades.",
+          "link": "https://kubernetes.io/docs/concepts/security/"
+        },
+        {
+          "num": 18,
+          "front": "etcd backup and restore — CKA critical topic",
+          "back": "Backup: ETCDCTL_API=3 etcdctl snapshot save /backup/etcd.db --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key\n\nRestore: etcdctl snapshot restore /backup/etcd.db --data-dir=/var/lib/etcd-restored\nUpdate etcd static pod manifest to use new data-dir.",
+          "link": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+        },
+        {
+          "num": 19,
+          "front": "kubectl commands NYU architect will expect fluency in",
+          "back": "kubectl get pods -o wide\nkubectl describe pod <name>\nkubectl logs <pod> --previous\nkubectl exec -it <pod> -- bash\nkubectl get events --sort-by=.lastTimestamp\nkubectl rollout status deployment/<name>\nkubectl rollout undo deployment/<name>\nkubectl top nodes / kubectl top pods\nkubectl get pods -o jsonpath='{.items[*].metadata.name}'\nkubectl create deploy x --image=y --dry-run=client -o yaml",
+          "link": "https://kubernetes.io/docs/reference/kubectl/cheatsheet/"
+        },
+        {
+          "num": 20,
+          "front": "Kubernetes upgrade strategy for production",
+          "back": "One minor version at a time (1.28 → 1.29, not 1.28 → 1.30). Control plane first, then workers. Drain workers before upgrading: kubectl drain --ignore-daemonsets --delete-emptydir-data. Check PodDisruptionBudgets — upgrade respects them. Test admission controllers against new version in staging first (learned from VA.gov upgrade incident). kubeadm upgrade plan → kubeadm upgrade apply.",
+          "link": "https://kubernetes.io/docs/tasks/administer-cluster/cluster-upgrade/"
+        }
+      ]
+    },
+    {
+      "name": "IaC & GitOps",
+      "cards": [
+        {
+          "num": 21,
+          "front": "Terraform module design for a Lead Expert",
+          "back": "Modules for reusability — teams consume, don't reinvent. Remote state in S3 + DynamoDB locking. Workspaces for environment separation. terraform plan in CI/CD — no surprises in prod. Sentinel policies for compliance guardrails. For NYU: modules for VPC, EKS, RDS, Databricks workspace — each team provisions via module, not raw resources. IaC review required before merge.",
+          "link": "https://developer.hashicorp.com/terraform/language/modules"
+        },
+        {
+          "num": 22,
+          "front": "GitOps principles — what does it mean in practice?",
+          "back": "Git is the single source of truth for all infrastructure and application state. No manual kubectl in production. ArgoCD pulls from Git and reconciles cluster state. Drift is detected and auto-corrected. Every change is a PR — reviewed, approved, auditable. For HIPAA: audit trail of every infrastructure change is in Git history. 'If it's not in Git, it doesn't exist.'",
+          "link": "https://opengitops.dev/"
+        },
+        {
+          "num": 23,
+          "front": "CI/CD pipeline design for a healthcare platform",
+          "back": "GitHub Actions CI: build → test → SAST scan (Semgrep) → container scan (Trivy) → push to ECR. ArgoCD CD: detects image tag change in Git, renders Helm templates, applies to cluster, monitors health. Security gates: block on HIGH/CRITICAL CVEs, require signed images (cosign), secrets scanning (Gitleaks). HIPAA: audit log of every deployment — who deployed what, when.",
+          "link": "https://docs.github.com/en/actions"
+        }
+      ]
+    },
+    {
+      "name": "Healthcare & HIPAA",
+      "cards": [
+        {
+          "num": 24,
+          "front": "HIPAA technical safeguards — what does infrastructure need?",
+          "back": "Access control: unique user IDs, automatic logoff, encryption. Audit controls: hardware/software activity logs. Integrity: PHI not improperly altered or destroyed. Transmission security: encryption in transit (TLS 1.2+). In K8s: Unity Catalog for data access control, CloudWatch audit logs, Vault for secrets, mTLS between services, encrypted EBS/S3 at rest.",
+          "link": "https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html"
+        },
+        {
+          "num": 25,
+          "front": "Your healthcare infrastructure experience",
+          "back": "VA.gov: federal healthcare platform, 9M+ veterans, FedRAMP High (stricter than HIPAA). Automated compliance — Terraform enforced encryption, IAM least privilege, audit logging. Auditors got reports, not spreadsheets.\nCambia Health Solutions: HIPAA-compliant Elasticsearch, SearchGuard field-level encryption for PHI, audit logs to SIEM.\nHope frame: 'NYU patients never notice an outage — because I've built infrastructure where reliability and compliance are non-negotiable.'",
+          "link": "https://www.hhs.gov/hipaa/index.html"
+        },
+        {
+          "num": 26,
+          "front": "NYU Langone — key facts for the interview",
+          "back": "#1 comprehensive academic medical center (Vizient, 3 consecutive years)\n9 clinical specialties ranked top 5 nationally\n$14.2 billion revenue, 320+ locations in NY and FL\nTempus AI collaboration for cancer care transformation\n$1 billion+ active NIH research awards\n2 tuition-free medical schools\nReports to: Director of Unix Platforms\nTeam: Platform Technologies and Cloud Operations",
+          "link": "https://nyulangone.org/about-us"
+        }
+      ]
+    },
+    {
+      "name": "Well-Architected Framework",
+      "cards": [
+        {
+          "num": 27,
+          "front": "Well-Architected Framework — what is it and why does NYU require it?",
+          "back": "A set of best practices for designing and operating reliable, secure, efficient, cost-effective cloud systems. AWS created it, Azure and GCP adopted equivalent frameworks. NYU's job spec explicitly requires: 'in-depth knowledge and demonstrative abilities to apply the six pillars across all three cloud platforms.' The 6 pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability.",
+          "link": "https://aws.amazon.com/architecture/well-architected/"
+        },
+        {
+          "num": 28,
+          "front": "Pillar 1: Operational Excellence — AWS vs Azure vs GCP",
+          "back": "Goal: run and monitor systems, continuously improve processes.\n\nAWS: CloudWatch (metrics/logs/alarms), Systems Manager (runbooks, patch), AWS Config (compliance), X-Ray (tracing), CloudTrail (audit).\n\nAzure: Azure Monitor + Log Analytics, Azure Automation, Azure Policy, Application Insights.\n\nGCP: Cloud Operations Suite (formerly Stackdriver) — Cloud Monitoring, Cloud Logging, Cloud Trace, Error Reporting.\n\nYour story: At Fiserv, built CloudWatch/Grafana/Datadog observability — MTTR dropped 45%. At VA.gov, automated compliance reporting via Terraform + AWS Config.",
+          "link": "https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html"
+        },
+        {
+          "num": 29,
+          "front": "Pillar 2: Security — AWS vs Azure vs GCP",
+          "back": "Goal: protect data, systems, assets. Identity, detection, infrastructure protection, data protection, incident response.\n\nAWS: IAM (least privilege), GuardDuty (threat detection), Security Hub (posture), KMS (encryption), Secrets Manager, VPC security groups, WAF.\n\nAzure: Entra ID (identity), Defender for Cloud (posture + threat), Key Vault, NSGs, DDoS Protection.\n\nGCP: IAM, Security Command Center, Cloud Armor (WAF/DDoS), Secret Manager, VPC firewall rules.\n\nYour story: Zero Trust RFC 002 at VA.gov (FedRAMP High). HIPAA at Cambia. SOC 2 at Fiserv.",
+          "link": "https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html"
+        },
+        {
+          "num": 30,
+          "front": "Pillar 3: Reliability — AWS vs Azure vs GCP",
+          "back": "Goal: recover from failures, meet demand, mitigate disruptions. Multi-region, auto-scaling, backup/restore.\n\nAWS: Multi-AZ deployments, Route 53 (health checks + failover), Auto Scaling Groups, ELB, RDS Multi-AZ, S3 cross-region replication.\n\nAzure: Availability Zones, Traffic Manager (global failover), VMSS, Azure Load Balancer, geo-redundant storage.\n\nGCP: Regional/multi-regional resources, Cloud Load Balancing (global anycast), Managed Instance Groups, Cloud Spanner (global DB).\n\nYour story: 99.95% uptime at VA.gov (9M users), 99.9% at Fiserv. Multi-AZ EKS with pod disruption budgets.",
+          "link": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html"
+        },
+        {
+          "num": 31,
+          "front": "Pillar 4: Performance Efficiency — AWS vs Azure vs GCP",
+          "back": "Goal: use computing resources efficiently, maintain efficiency as demand changes and technology evolves.\n\nAWS: Right-sizing with Compute Optimizer, EC2 instance families (compute/memory/storage optimized), Lambda (serverless), ElastiCache, CloudFront CDN.\n\nAzure: Azure Advisor (right-sizing), VM families, Azure Functions, Azure Cache for Redis, Azure CDN.\n\nGCP: GKE Autopilot (auto right-sizing), Cloud Functions, Memorystore, Cloud CDN, Committed Use Discounts.\n\nYour story: EKS with HPA + VPA at VA.gov — auto-scaled to handle traffic spikes. Kubernetes resource requests/limits enforced via Kyverno.",
+          "link": "https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html"
+        },
+        {
+          "num": 32,
+          "front": "Pillar 5: Cost Optimization — AWS vs Azure vs GCP",
+          "back": "Goal: avoid unnecessary costs, understand spending, control fund allocation.\n\nAWS: Cost Explorer, AWS Budgets, Savings Plans, Spot Instances, S3 Intelligent-Tiering, Trusted Advisor.\n\nAzure: Cost Management + Billing, Azure Advisor (cost), Reserved Instances, Spot VMs, Azure Hybrid Benefit.\n\nGCP: Cloud Billing, Committed Use Discounts, Preemptible VMs, Recommender API, Budget alerts.\n\nYour story: Databricks cluster auto-termination (30 min idle) + spot instances. Kubernetes resource quotas prevent runaway costs. At Mosaic451: 40% infrastructure cost reduction through right-sizing.",
+          "link": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html"
+        },
+        {
+          "num": 33,
+          "front": "Pillar 6: Sustainability — AWS vs Azure vs GCP",
+          "back": "Goal: minimize environmental impact of cloud workloads. Newest pillar (AWS added 2021).\n\nAWS: Customer Carbon Footprint Tool, Graviton processors (60% less energy than x86), S3 Intelligent-Tiering (reduces storage footprint), right-sizing to reduce idle resources.\n\nAzure: Microsoft Sustainability Calculator, carbon-aware regions, Azure carbon dashboard.\n\nGCP: Carbon Footprint dashboard, carbon-free energy percentage per region, Google's 24/7 carbon-free energy commitment.\n\nFor NYU: academic medical centers have sustainability mandates. Right-sizing K8s workloads and using ARM-based instances (Graviton/Ampere) reduces both cost and carbon.",
+          "link": "https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/sustainability-pillar.html"
+        },
+        {
+          "num": 34,
+          "front": "How to apply Well-Architected Framework in practice — NYU context",
+          "back": "AWS Well-Architected Tool: run a workload review, get improvement plan. Azure Advisor: automated recommendations across all 6 pillars. GCP Recommender: per-service recommendations.\n\nFor NYU specifically:\n- Security: HIPAA controls automated via IaC (not manual checklists)\n- Reliability: multi-AZ EKS, PodDisruptionBudgets for clinical apps\n- Cost: Databricks cluster policies, K8s resource quotas per team\n- Operational Excellence: GitOps — every change auditable in Git\n- Performance: HPA for clinical workloads, Graviton nodes for cost+sustainability\n- Sustainability: right-size before scaling, ARM instances where possible",
+          "link": "https://aws.amazon.com/well-architected-tool/"
+        }
+      ]
+    }
+  ]
+}

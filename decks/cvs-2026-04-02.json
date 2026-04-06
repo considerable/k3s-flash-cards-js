@@ -1,0 +1,880 @@
+{
+  "name": "CVS GKE (2026-04-02)",
+  "sections": [
+    {
+      "name": "Cluster Provisioning",
+      "cards": [
+        {
+          "num": 1,
+          "front": "How does cluster provisioning work when new hardware is added?",
+          "back": "Terraform-driven — define cluster config as code, submit via GitHub Actions workflow. Terraform provisions EKS/GKE with node groups, IAM, VPC, security groups. For bare-metal: PXE/Kickstart for OS, then kubeadm join with bootstrap token. Must be fully automated and idempotent — no manual steps.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/"
+        },
+        {
+          "num": 2,
+          "front": "How are kubeadm, kubelet, kubectl installed during provisioning?",
+          "back": "Add Kubernetes apt/yum repo, install pinned versions (pinning is critical — prevents unintended upgrades). Enable kubelet as systemd service. kubeadm init bootstraps control plane, kubeadm join adds workers. Wrap in Ansible playbooks or cloud-init for repeatability at scale.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/"
+        },
+        {
+          "num": 3,
+          "front": "Why pin Kubernetes binary versions?",
+          "back": "Prevents unintended upgrades that could break API compatibility. At CVS scale (600+ clusters), an accidental version mismatch across nodes causes subtle failures. Always pin kubeadm, kubelet, kubectl to the same version and upgrade deliberately.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/"
+        },
+        {
+          "num": 4,
+          "front": "How does CVS Container Engineering team take over after cluster provisioning?",
+          "back": "Separate automation team provisions clusters via Terraform/GitHub Actions workflows. Container Engineering team then: installs platform software (ArgoCD, Istio, Prometheus), manages upgrades, applies security patches and CVE remediations, enforces compliance policies (e.g. no root containers).",
+          "link": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/"
+        }
+      ]
+    },
+    {
+      "name": "Secrets & Vault",
+      "cards": [
+        {
+          "num": 5,
+          "front": "How do you manage secrets for a new cluster pulling from private registries?",
+          "back": "Two layers: (1) Image pull secrets — create Secret type docker-registry, reference in imagePullSecrets or patch default service account. Use Kyverno ClusterPolicy to auto-inject at scale. (2) Cluster secrets — Vault Agent Injector or External Secrets Operator injects secrets at runtime so they never live in etcd plaintext.",
+          "link": "https://developer.hashicorp.com/vault/docs/auth/kubernetes"
+        },
+        {
+          "num": 6,
+          "front": "How does a new cluster authenticate with Vault?",
+          "back": "Vault Kubernetes auth method: configure cluster as trusted backend with API server URL and CA cert. Vault validates pod identity via TokenReview API using service account JWT. Configure Vault roles mapping K8s SAs and namespaces to Vault policies. Vault Agent sidecar authenticates and fetches secrets at pod startup.",
+          "link": "https://developer.hashicorp.com/vault/docs/auth/kubernetes"
+        },
+        {
+          "num": 7,
+          "front": "How to handle image pull credentials for JFrog/Nexus at scale?",
+          "back": "Single namespace: Secret type kubernetes.io/dockerconfigjson + imagePullSecrets. Cluster-wide: patch default service account or use mutating webhook to inject. At 600+ cluster scale: Kyverno ClusterPolicy that auto-adds imagePullSecret to all pods across all namespaces — propagates automatically without manual intervention.",
+          "link": "https://developer.hashicorp.com/vault/docs/auth/kubernetes"
+        },
+        {
+          "num": 8,
+          "front": "What is the Vault Kubernetes auth flow?",
+          "back": "1. Pod starts with service account token. 2. Vault Agent sidecar sends JWT to Vault /auth/kubernetes/login. 3. Vault calls cluster TokenReview API to validate JWT. 4. Vault returns a Vault token scoped to the service account's policy. 5. Agent uses token to fetch secrets and write to shared in-memory volume.",
+          "link": "https://developer.hashicorp.com/vault/docs/auth/kubernetes"
+        }
+      ]
+    },
+    {
+      "name": "ArgoCD & GitOps",
+      "cards": [
+        {
+          "num": 9,
+          "front": "How does ArgoCD synchronize applications with Git?",
+          "back": "Reconciliation loop (default 3 min) compares desired state in Git vs live cluster state using kubectl diff logic. On drift: alerts (manual sync) or auto-applies (auto-sync). Webhook-driven sync from GitHub triggers immediately on push. Uses server-side apply for proper field management.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/"
+        },
+        {
+          "num": 10,
+          "front": "How did you configure ArgoCD OIDC authentication?",
+          "back": "Configured ArgoCD with GitHub as OIDC provider. GitHub org teams mapped to ArgoCD RBAC roles — e.g. github-org:platform-team → role:admin. OIDC tokens are short-lived and auto-refreshed — no stored credentials to lose. No separate identity provider needed when using GitHub.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/#existing-oidc-provider"
+        },
+        {
+          "num": 11,
+          "front": "ArgoCD OIDC — what happens when a user logs in?",
+          "back": "1. User clicks login in ArgoCD UI. 2. Redirected to GitHub OAuth. 3. User authenticates with GitHub credentials. 4. GitHub returns JWT with org/team claims. 5. ArgoCD dex validates JWT and maps GitHub teams to ArgoCD RBAC roles (e.g. github-org:platform-team → role:admin). 6. User gets scoped access — no ArgoCD-specific password needed.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/#existing-oidc-provider"
+        },
+        {
+          "num": 12,
+          "front": "ArgoCD RBAC — how to scope access per team?",
+          "back": "argocd-rbac-cm ConfigMap defines policies: p, role:dev-team, applications, get, dev/*, allow. Map GitHub teams to roles: g, github-org:developers, role:dev-team. Result: dev team can only view/sync apps in dev namespace. Platform team gets admin. Audit log shows who synced what — critical for compliance at CVS scale.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/"
+        },
+        {
+          "num": 13,
+          "front": "What is ArgoCD App of Apps pattern?",
+          "back": "A root ArgoCD Application that manages other Applications as its children. Enables hierarchical management of many apps — one sync of the root deploys/updates all child apps. Scales to managing hundreds of applications across clusters.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/"
+        },
+        {
+          "num": 14,
+          "front": "How does ArgoCD handle Helm chart deployments?",
+          "back": "ArgoCD Application spec points to Helm chart in Git repo. Specify values files and parameter overrides in the Application spec. ArgoCD renders the chart and applies the resulting manifests. Supports helm.valueFiles, helm.parameters, and helm.releaseName overrides.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/"
+        },
+        {
+          "num": 15,
+          "front": "What is ArgoCD ApplicationSet?",
+          "back": "Generates multiple ArgoCD Applications from a template — e.g. one Application per cluster from a list. Critical for CVS scale: one ApplicationSet can deploy the same app to 600+ clusters simultaneously with cluster-specific value overrides.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        }
+      ]
+    },
+    {
+      "name": "Helm",
+      "cards": [
+        {
+          "num": 14,
+          "front": "What are Helm charts and why use them?",
+          "back": "Templated K8s manifests packaged with values file. Benefits: reusability (one chart, many environments), versioning (chart versions in Helm repo), dependency management, lifecycle management (upgrade, rollback). Go template syntax renders YAML based on provided values.",
+          "link": "https://helm.sh/docs/chart_template_guide/"
+        },
+        {
+          "num": 15,
+          "front": "How to override Helm values during deployment?",
+          "back": "CLI: helm upgrade my-app ./chart --set image.tag=abc123. Values file: helm upgrade -f values-prod.yaml. In ArgoCD: helm.valueFiles or helm.parameters in Application spec. For 600+ clusters: values hierarchy — base chart values + environment values + cluster-specific ArgoCD overrides.",
+          "link": "https://helm.sh/docs/chart_template_guide/"
+        },
+        {
+          "num": 16,
+          "front": "What is Helm values hierarchy at scale?",
+          "back": "Base values in chart (defaults), environment-specific values files (values-prod.yaml), cluster-specific overrides in ArgoCD Application spec. Kustomize can layer on top of Helm for cluster-specific patches. Enables managing hundreds of clusters with minimal duplication.",
+          "link": "https://helm.sh/docs/chart_template_guide/"
+        },
+        {
+          "num": 17,
+          "front": "What is helm template?",
+          "back": "Renders chart templates locally without installing — helm template my-release ./chart -f values.yaml. Outputs the final K8s YAML that would be applied. Essential for debugging template issues, CI validation, and reviewing what ArgoCD will deploy.",
+          "link": "https://helm.sh/docs/helm/helm_template/"
+        },
+        {
+          "num": 18,
+          "front": "Helm Go template functions you use most?",
+          "back": "{{ .Values.x }} for values, {{ .Release.Name }} for release metadata, {{ include \"chart.labels\" . }} for named templates, {{ toYaml .Values.resources | nindent 10 }} for YAML blocks, {{ if .Values.ingress.enabled }} for conditionals, {{ range }} for loops, {{ default \"value\" .Values.x }} for defaults.",
+          "link": "https://helm.sh/docs/chart_template_guide/function_list/"
+        },
+        {
+          "num": 19,
+          "front": "How to debug a failing Helm template?",
+          "back": "1. helm template --debug to see rendered output with errors. 2. helm install --dry-run --debug to simulate install. 3. Check indentation — nindent vs indent matters. 4. Use {{ printf \"%#v\" .Values }} to dump values. 5. helm lint to catch syntax errors before deploy.",
+          "link": "https://helm.sh/docs/chart_template_guide/"
+        }
+      ]
+    },
+    {
+      "name": "GitHub Actions & CI/CD",
+      "cards": [
+        {
+          "num": 20,
+          "front": "How does GitHub Actions fit into the CVS deployment pipeline?",
+          "back": "GitHub Actions runs CI (build, test, scan, push image to registry). ArgoCD handles CD (detects image tag change in Git, syncs to cluster). Separation of concerns: GitHub Actions never touches kubectl — it only updates the Git repo that ArgoCD watches.",
+          "link": "https://docs.github.com/en/actions"
+        },
+        {
+          "num": 21,
+          "front": "GitHub Actions vs ArgoCD — who does what?",
+          "back": "GitHub Actions: build Docker image, run tests, push to registry, update image tag in Helm values, PR automation. ArgoCD: detect Git change, render Helm templates, apply to cluster, monitor health, rollback on failure. GitHub Actions is push-based CI, ArgoCD is pull-based CD.",
+          "link": "https://docs.github.com/en/actions"
+        },
+        {
+          "num": 22,
+          "front": "How does GitHub webhook trigger ArgoCD sync?",
+          "back": "Configure GitHub webhook to POST to ArgoCD API server on push events. ArgoCD immediately compares Git state vs cluster state instead of waiting for the 3-minute polling interval. Faster deployments — changes deploy in seconds instead of minutes.",
+          "link": "https://docs.github.com/en/actions"
+        },
+        {
+          "num": 23,
+          "front": "GitHub Actions workflow to provision a new cluster with Terraform?",
+          "back": "Trigger: PR merged to infra repo. Steps: checkout, setup Terraform, terraform init with remote backend (S3/GCS), terraform plan (post plan output as PR comment), terraform apply on merge. Secrets: cloud credentials stored in GitHub Secrets or fetched from Vault via OIDC. State locked in remote backend to prevent concurrent applies.",
+          "link": "https://docs.github.com/en/actions"
+        },
+        {
+          "num": 24,
+          "front": "How to run Terraform safely in GitHub Actions?",
+          "back": "1. Remote state backend (S3+DynamoDB lock or GCS). 2. terraform plan on PR, apply only on merge to main. 3. Use OIDC federation for cloud auth — no long-lived credentials in GitHub Secrets. 4. Pin Terraform and provider versions. 5. Use terraform fmt and tflint in CI. 6. Require PR approval before merge — no direct pushes to main.",
+          "link": "https://docs.github.com/en/actions"
+        },
+        {
+          "num": 25,
+          "front": "GitHub Actions OIDC with AWS/GCP — how does it work?",
+          "back": "GitHub Actions gets a short-lived OIDC JWT per workflow run. AWS: configure IAM OIDC provider trusting token.actions.githubusercontent.com, IAM role with condition on repo/branch. GCP: Workload Identity Federation with GitHub as identity provider. No static credentials stored — token is scoped to the specific repo and workflow run.",
+          "link": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect"
+        },
+        {
+          "num": 26,
+          "front": "How to onboard a new team/namespace via GitHub Actions + Terraform?",
+          "back": "Team submits PR to infra repo adding their namespace config (YAML or Terraform). GitHub Actions runs terraform plan showing what will be created (namespace, ResourceQuota, LimitRange, RBAC, imagePullSecret). On merge: terraform apply creates resources. ArgoCD detects new namespace and deploys team's apps. Fully self-service — no platform team manual work.",
+          "link": "https://docs.github.com/en/actions"
+        },
+        {
+          "num": 27,
+          "front": "Terraform state management for 600+ clusters?",
+          "back": "One state file per cluster — never one giant state. Use Terraform workspaces or separate state backends per cluster. Remote backend with locking (S3+DynamoDB or GCS). State contains sensitive data — encrypt at rest, restrict access via IAM. Use terraform_remote_state data source sparingly — prefer passing outputs via Vault or SSM.",
+          "link": "https://developer.hashicorp.com/terraform/language/state/remote"
+        }
+      ]
+    },
+    {
+      "name": "Sidecar Containers",
+      "cards": [
+        {
+          "num": 23,
+          "front": "What is a sidecar container?",
+          "back": "Additional container in same Pod as main app — shares network namespace (same localhost) and can share volumes. Used to augment main container without modifying it. K8s 1.28+ has native sidecar support with proper lifecycle management.",
+          "link": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/"
+        },
+        {
+          "num": 24,
+          "front": "Real-world sidecar examples?",
+          "back": "1. Istio Envoy proxy — auto-injected, handles mTLS, traffic routing, telemetry. 2. Vault Agent — authenticates with Vault, writes secrets to shared in-memory volume. 3. Fluentd/Filebeat — tails app log file from shared emptyDir, ships to OpenSearch. 4. Init containers — run before main container for DB migrations, config setup.",
+          "link": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/"
+        },
+        {
+          "num": 25,
+          "front": "How does Istio sidecar injection work?",
+          "back": "Mutating admission webhook (istio-sidecar-injector) intercepts pod creation in namespaces labeled istio-injection=enabled. Automatically adds Envoy proxy container and init container to pod spec. Envoy handles all inbound/outbound traffic, enabling mTLS, traffic management, and telemetry without app code changes.",
+          "link": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/"
+        }
+      ]
+    },
+    {
+      "name": "Admission Controllers",
+      "cards": [
+        {
+          "num": 26,
+          "front": "What are mutating vs validating admission webhooks?",
+          "back": "Mutating: runs first, can modify requests — sidecar injection, default resource limits, label injection. Validating: runs after mutation, can only approve/reject — policy enforcement, security standards. Both configured via MutatingWebhookConfiguration and ValidatingWebhookConfiguration resources.",
+          "link": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/"
+        },
+        {
+          "num": 27,
+          "front": "What is Kyverno and how does it work?",
+          "back": "Policy engine for K8s — ClusterPolicy resources define rules as K8s YAML (no Rego needed). Can mutate (add defaults, inject labels) AND validate (reject violations). Examples: require resource limits, block root containers, auto-add imagePullSecrets. Scales to 600+ clusters via GitOps.",
+          "link": "https://kyverno.io/docs/introduction/"
+        },
+        {
+          "num": 28,
+          "front": "What is OPA/Gatekeeper?",
+          "back": "Policy engine using Rego language — ConstraintTemplate defines policy logic, Constraint applies it. Runs as validating webhook. More powerful than Kyverno for complex policies but steeper learning curve. CVS uses both OPA and Kyverno.",
+          "link": "https://open-policy-agent.github.io/gatekeeper/website/docs/"
+        },
+        {
+          "num": 29,
+          "front": "failurePolicy on admission webhooks?",
+          "back": "Fail: reject request if webhook is unavailable (safe but risky during upgrades). Ignore: allow request if webhook is unavailable (less safe but prevents outages). For non-critical webhooks use Ignore. For security-critical webhooks use Fail. Lesson from VA.gov upgrade incident: set Ignore temporarily during upgrades.",
+          "link": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/"
+        }
+      ]
+    },
+    {
+      "name": "Istio Service Mesh",
+      "cards": [
+        {
+          "num": 30,
+          "front": "What is Istio and what does it do?",
+          "back": "Service mesh — manages internal traffic routing within K8s clusters. Handles: mTLS between services, traffic management (VirtualService, DestinationRule), observability (metrics, traces, logs), and security policies. At CVS: manages traffic flow between load balancers and application containers once requests enter the cluster.",
+          "link": "https://istio.io/latest/docs/concepts/what-is-istio/"
+        },
+        {
+          "num": 31,
+          "front": "What is Istio ambient mesh?",
+          "back": "New Istio mode (replacing sidecar model) — moves proxy functionality to node-level ztunnel (L4) and waypoint proxies (L7). No sidecar injection needed. Benefits: lower resource overhead, simpler upgrades, no pod restarts for mesh changes. CVS team wants engineers who understand both sidecar and ambient models.",
+          "link": "https://istio.io/latest/docs/ambient/overview/"
+        },
+        {
+          "num": 32,
+          "front": "Istio VirtualService vs DestinationRule?",
+          "back": "VirtualService: defines routing rules — how traffic is routed to a service (weights for canary, retries, timeouts, fault injection). DestinationRule: defines policies for traffic to a destination — load balancing, connection pool, outlier detection, TLS settings. VirtualService routes TO a service, DestinationRule configures HOW to connect.",
+          "link": "https://istio.io/latest/docs/reference/config/networking/virtual-service/"
+        },
+        {
+          "num": 33,
+          "front": "How to handle Istio version upgrades across 600+ clusters?",
+          "back": "Canary upgrade approach: upgrade istiod first (control plane), then gradually migrate data plane proxies. Use revision-based upgrades — install new Istio revision alongside old, migrate namespaces one by one by changing istio.io/rev label. Automate via ArgoCD ApplicationSet to roll out across clusters in waves with health checks between waves.",
+          "link": "https://istio.io/latest/docs/concepts/what-is-istio/"
+        }
+      ]
+    },
+    {
+      "name": "Troubleshooting",
+      "cards": [
+        {
+          "num": 34,
+          "front": "Kubernetes upgrade issue — admission controller incompatibility?",
+          "back": "Symptom: all pod creation blocked after upgrade. Diagnosis: kubectl describe pod shows 'admission webhook denied', kubectl get validatingwebhookconfigurations shows problematic webhook. Fix: patch failurePolicy to Ignore to restore scheduling, fix controller code, re-enable. Prevention: test admission controllers against target K8s version in staging first.",
+          "link": "https://kubernetes.io/docs/tasks/debug/"
+        },
+        {
+          "num": 35,
+          "front": "ArgoCD UI access issue — losing credentials?",
+          "back": "CVS current problem. Solution: integrate OIDC authentication with ArgoCD via dex + GitHub OAuth. OIDC tokens are short-lived and auto-refreshed — no stored credentials to lose. Configure dex GitHub connector, map GitHub org teams to ArgoCD RBAC roles. Eliminates manual credential management.",
+          "link": "https://kubernetes.io/docs/tasks/debug/"
+        },
+        {
+          "num": 36,
+          "front": "NetworkPolicy blocking pod-to-pod traffic?",
+          "back": "Symptom: intermittent connectivity failures between namespaces. Diagnosis: check NetworkPolicy resources, verify namespaceSelector labels match current namespace labels. Fix: update namespaceSelector to match correct labels. Prevention: NetworkPolicy changes via GitOps with peer review — misconfigured policy silently blocks traffic.",
+          "link": "https://kubernetes.io/docs/tasks/debug/"
+        },
+        {
+          "num": 37,
+          "front": "CNI plugin troubleshooting methodology?",
+          "back": "1. kubectl exec to run curl/ping between pods. 2. Check CNI pod logs (calico-node, cilium-agent). 3. Verify IP pool config. 4. Check iptables/eBPF rules programmed by CNI. 5. Verify CNI pods running on all nodes. 6. Check node-to-node connectivity. CNI is the foundation — if broken, nothing works.",
+          "link": "https://kubernetes.io/docs/tasks/debug/"
+        },
+        {
+          "num": 38,
+          "front": "How to debug a pod that won't start?",
+          "back": "1. kubectl describe pod — check Events section for scheduling/image/webhook errors. 2. kubectl logs --previous — logs from crashed container. 3. kubectl get events --sort-by=.lastTimestamp. 4. Check resource requests vs node capacity. 5. Check admission webhook logs. 6. kubectl debug for ephemeral container on distroless images.",
+          "link": "https://kubernetes.io/docs/tasks/debug/"
+        }
+      ]
+    },
+    {
+      "name": "Container Troubleshooting",
+      "cards": [
+        {
+          "num": 33,
+          "front": "Container OOMKilled — how to diagnose and fix?",
+          "back": "Symptom: pod restarts, kubectl describe shows OOMKilled. Cause: container exceeded memory limit. Diagnosis: kubectl top pod for current usage, check limits in deployment spec. Fix: increase memory limit, or fix memory leak in app. Check if JVM/Node.js heap is set correctly relative to container limit.",
+          "link": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/"
+        },
+        {
+          "num": 34,
+          "front": "Container CPU throttled — how to diagnose?",
+          "back": "Symptom: slow response times but pod stays running. kubectl top pod shows CPU near limit. Check container_cpu_cfs_throttled_seconds_total in Prometheus. Fix: increase CPU limit, or optimize app. Note: CPU is throttled (not killed) unlike memory which causes OOMKill.",
+          "link": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-cpu-resource/"
+        },
+        {
+          "num": 35,
+          "front": "Pod failing due to missing environment variable or secret?",
+          "back": "Symptom: CrashLoopBackOff, app logs show missing config. kubectl describe pod shows 'CreateContainerConfigError' if Secret/ConfigMap doesn't exist. Diagnosis: check env/envFrom in pod spec, verify Secret and ConfigMap exist in the namespace. Fix: create missing Secret or fix the reference name.",
+          "link": "https://kubernetes.io/docs/tasks/debug/debug-application/"
+        },
+        {
+          "num": 36,
+          "front": "ImagePullBackOff — how to troubleshoot?",
+          "back": "kubectl describe pod shows 'Failed to pull image'. Causes: (1) wrong image name or tag, (2) private registry without imagePullSecret, (3) registry auth expired, (4) network/DNS issue reaching registry. Fix: verify image exists (docker pull locally), check imagePullSecrets on pod or service account, check registry credentials in Secret.",
+          "link": "https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy"
+        },
+        {
+          "num": 37,
+          "front": "Container starts but readiness probe fails?",
+          "back": "Symptom: pod Running but 0/1 Ready, not receiving traffic. kubectl describe shows readiness probe failing. Causes: app not listening on expected port, wrong probe path, app needs longer startup time. Fix: check probe config (port, path, initialDelaySeconds), kubectl exec to curl the probe endpoint manually.",
+          "link": "https://kubernetes.io/docs/tasks/debug/debug-application/"
+        },
+        {
+          "num": 38,
+          "front": "How to inspect secrets mounted in a running container?",
+          "back": "kubectl exec -it pod -- ls /path/to/mounted/secret to verify files exist. kubectl exec -- cat /path/to/secret/key to check values (careful in production). For env vars: kubectl exec -- env | grep SECRET_NAME. Never log secret values — use kubectl describe pod to verify Secret reference without exposing values.",
+          "link": "https://kubernetes.io/docs/tasks/debug/debug-application/"
+        },
+        {
+          "num": 39,
+          "front": "Container can't resolve DNS — how to debug?",
+          "back": "kubectl exec -- nslookup kubernetes.default to test cluster DNS. Check CoreDNS pods running: kubectl get pods -n kube-system -l k8s-app=kube-dns. Check resolv.conf: kubectl exec -- cat /etc/resolv.conf. Common cause: NetworkPolicy blocking egress to kube-dns on port 53.",
+          "link": "https://kubernetes.io/docs/tasks/debug/debug-application/"
+        },
+        {
+          "num": 40,
+          "front": "How to check why a container keeps restarting?",
+          "back": "1. kubectl describe pod — check Events and Last State (exit code). 2. kubectl logs --previous — logs from crashed instance. 3. Exit code 137 = OOMKilled, 1 = app error, 126 = command not found, 0 = completed (wrong restartPolicy). 4. Check liveness probe — failing probe causes restart even if app is healthy but slow.",
+          "link": "https://kubernetes.io/docs/tasks/debug/debug-application/"
+        }
+      ]
+    },
+    {
+      "name": "cert-manager & TLS",
+      "cards": [
+        {
+          "num": 41,
+          "front": "What is cert-manager and how does it work?",
+          "back": "Automates TLS certificate management in K8s. Watches Ingress/Certificate resources with cert-manager annotations. ClusterIssuer backed by Let's Encrypt (external) or internal CA. Automatically provisions and renews certificates. Integrates with Vault PKI for enterprise CA scenarios.",
+          "link": "https://cert-manager.io/docs/"
+        },
+        {
+          "num": 42,
+          "front": "cert-manager ClusterIssuer vs Issuer?",
+          "back": "Issuer: namespace-scoped — can only issue certs in its namespace. ClusterIssuer: cluster-wide — can issue certs in any namespace. Use ClusterIssuer for shared infrastructure (ingress TLS). Use Issuer for namespace-specific CAs or when you need isolation between teams.",
+          "link": "https://cert-manager.io/docs/concepts/issuer/"
+        },
+        {
+          "num": 43,
+          "front": "How does Istio handle internal service certificates?",
+          "back": "Istio's own CA (istiod/Citadel) automatically issues and rotates mTLS certificates for all services in the mesh. No cert-manager needed for internal mTLS. cert-manager handles external-facing TLS (Ingress). Istio certificates rotate every 24 hours by default — fully automated.",
+          "link": "https://cert-manager.io/docs/"
+        }
+      ]
+    },
+    {
+      "name": "Scale & Platform Engineering",
+      "cards": [
+        {
+          "num": 44,
+          "front": "What scale of K8s environments have you managed?",
+          "back": "VA.gov: production EKS serving 9M+ veterans, multiple GovCloud regions, 15+ microservices via ArgoCD. Fiserv: EKS across 3 AWS regions, millions of transactions. CVS scale (600+ clusters) requires automation-first mindset — manual operations don't scale past a few dozen clusters. Everything must be policy-driven and observable.",
+          "link": "https://kubernetes.io/docs/concepts/cluster-administration/"
+        },
+        {
+          "num": 45,
+          "front": "How do you update configuration across 600+ clusters simultaneously?",
+          "back": "ArgoCD ApplicationSet generates one Application per cluster from a template. A single change to base Helm chart propagates to all clusters. Use wave-based rollout: update 1% of clusters first, monitor health, then proceed in waves. Kyverno policies enforce standards automatically without per-cluster intervention.",
+          "link": "https://kubernetes.io/docs/concepts/cluster-administration/"
+        },
+        {
+          "num": 46,
+          "front": "What is the Container Engineering team's responsibility at CVS?",
+          "back": "Post-provisioning ownership of the container platform ecosystem: install platform software (ArgoCD, Istio, Prometheus, Grafana, OPA, Kyverno), manage upgrades, apply security patches and CVE remediations, enforce compliance policies (no root containers), support DevOps teams consuming platform services.",
+          "link": "https://kubernetes.io/docs/concepts/cluster-administration/"
+        },
+        {
+          "num": 47,
+          "front": "How do DevOps teams consume CVS Container Engineering services?",
+          "back": "DevOps teams use ArgoCD for CI/CD application deployments. Infrastructure teams handle foundational resources (GCP projects, AWS accounts, databases, storage, IAM). Container Engineering provides the Kubernetes platform layer in between — the runtime environment where applications actually run.",
+          "link": "https://kubernetes.io/docs/concepts/cluster-administration/"
+        }
+      ]
+    },
+    {
+      "name": "Monitoring & Observability",
+      "cards": [
+        {
+          "num": 48,
+          "front": "Monitoring stack for K8s at scale?",
+          "back": "kube-prometheus-stack Helm chart: Prometheus Operator + Grafana + pre-built K8s dashboards. kube-state-metrics for cluster state, node-exporter for node metrics. SLOs as Prometheus recording rules, error budget burn rate alerts via Alertmanager. Datadog for APM and distributed tracing. At CVS scale: centralized Prometheus federation or Thanos for cross-cluster metrics.",
+          "link": "https://prometheus.io/docs/introduction/overview/"
+        },
+        {
+          "num": 49,
+          "front": "How to define SLOs in Prometheus?",
+          "back": "Define SLI as a Prometheus recording rule (e.g. ratio of successful requests). Set SLO target (e.g. 99.9%). Create error budget burn rate alerts — fast burn (1h window) for paging, slow burn (6h window) for tickets. Use Grafana SLO dashboards to visualize error budget consumption.",
+          "link": "https://sre.google/workbook/implementing-slos/"
+        },
+        {
+          "num": 50,
+          "front": "What is Prometheus federation?",
+          "back": "Allows a central Prometheus to scrape metrics from multiple cluster-level Prometheus instances. Used at large scale to aggregate metrics across 600+ clusters into a central view. Alternative: Thanos (long-term storage + global query) or Cortex/Mimir for multi-tenant metrics.",
+          "link": "https://prometheus.io/docs/prometheus/latest/federation/"
+        },
+        {
+          "num": 51,
+          "front": "Grafana dashboards for K8s — what do you monitor?",
+          "back": "Cluster level: node CPU/memory/disk, pod count, API server latency. Namespace level: pod restarts, OOMKills, failed deployments. App level: request rate, error rate, P95/P99 latency (RED method). Istio: service-to-service traffic, mTLS status, circuit breaker trips. Use kube-prometheus-stack pre-built dashboards as baseline, customize per team.",
+          "link": "https://grafana.com/grafana/dashboards/"
+        },
+        {
+          "num": 52,
+          "front": "Grafana alerting — how to set up for K8s?",
+          "back": "Grafana alerting rules query Prometheus — e.g. alert when pod restart count > 3 in 5 minutes, or error rate exceeds SLO budget. Route alerts via contact points: PagerDuty for critical (pod down), Slack for warning (high latency). Use silence and mute timings for maintenance windows. At scale: centralized Grafana with datasources per cluster.",
+          "link": "https://prometheus.io/docs/introduction/overview/"
+        },
+        {
+          "num": 53,
+          "front": "How to build a fleet-wide Grafana dashboard for 600+ clusters?",
+          "back": "Thanos or Prometheus federation as datasource — aggregates metrics from all clusters. Dashboard variables: cluster selector dropdown, namespace filter. Key panels: cluster health matrix (green/red per cluster), total pod count across fleet, top 10 clusters by error rate, upgrade status. Enables single-pane-of-glass view for the 8-person team.",
+          "link": "https://prometheus.io/docs/introduction/overview/"
+        },
+        {
+          "num": 54,
+          "front": "What is the RED method for monitoring?",
+          "back": "Rate (requests per second), Errors (failed requests per second), Duration (latency distribution). Applied per service. Grafana dashboard with 3 panels per service. If Rate drops: traffic issue. If Errors spike: app bug or dependency failure. If Duration increases: performance degradation. Standard for microservices observability.",
+          "link": "https://prometheus.io/docs/introduction/overview/"
+        }
+      ]
+    },
+    {
+      "name": "Dockerfile & Container Images",
+      "cards": [
+        {
+          "num": 55,
+          "front": "Dockerfile best practices for production?",
+          "back": "Multi-stage build (builder + runtime), minimal base image (distroless or alpine), pin base image digest not just tag, COPY specific files (not COPY . .), run as non-root USER, no secrets in image layers, .dockerignore to exclude build artifacts. Each layer should be ordered least-to-most frequently changed for cache efficiency.",
+          "link": "https://docs.docker.com/build/building/best-practices/"
+        },
+        {
+          "num": 56,
+          "front": "Multi-stage Dockerfile — why and how?",
+          "back": "Stage 1 (builder): install build tools, compile code. Stage 2 (runtime): copy only the binary/artifact from builder into a minimal base. Result: smaller image (no compilers, no source code), smaller attack surface. Example: Go binary built in golang:1.22 image, copied into gcr.io/distroless/static for a ~5MB final image.",
+          "link": "https://docs.docker.com/build/building/best-practices/"
+        },
+        {
+          "num": 57,
+          "front": "How to scan container images for vulnerabilities?",
+          "back": "Trivy (open source, CI-friendly): trivy image myapp:latest --severity HIGH,CRITICAL. Integrate into GitHub Actions — fail the pipeline on HIGH/CRITICAL CVEs. Also: Snyk, Grype, AWS ECR scanning, GCR vulnerability scanning. At CVS scale: enforce scanning via Kyverno policy that blocks unscanned images from deploying.",
+          "link": "https://aquasecurity.github.io/trivy/"
+        },
+        {
+          "num": 58,
+          "front": "Why use distroless or scratch base images?",
+          "back": "No shell, no package manager, no OS utilities — only the app binary and its runtime dependencies. Reduces attack surface dramatically (no shell = no shell exploits). Debugging harder — use kubectl debug with ephemeral containers. Google's distroless images are the standard for production Java, Node, Python, Go.",
+          "link": "https://github.com/GoogleContainerTools/distroless"
+        },
+        {
+          "num": 59,
+          "front": "How to reduce Docker image size?",
+          "back": "1. Multi-stage build. 2. Alpine or distroless base. 3. Combine RUN commands to reduce layers. 4. Remove caches (apt-get clean, npm cache clean). 5. .dockerignore to exclude tests, docs, .git. 6. Pin specific package versions instead of installing extras. Target: Go ~5-20MB, Node ~50-100MB, Java ~100-200MB.",
+          "link": "https://docs.docker.com/build/building/best-practices/"
+        }
+      ]
+    },
+    {
+      "name": "Istio Service Communication",
+      "cards": [
+        {
+          "num": 60,
+          "front": "How do microservices communicate through Istio?",
+          "back": "App sends request to service hostname (e.g. http://payment:8080). Envoy sidecar intercepts outbound traffic via iptables rules, applies mTLS encryption, routing rules (VirtualService), retries, timeouts, and circuit breaking (DestinationRule). Receiving Envoy sidecar terminates mTLS and forwards to the app container on localhost. App code is unaware of Istio.",
+          "link": "https://istio.io/latest/docs/concepts/traffic-management/"
+        },
+        {
+          "num": 61,
+          "front": "Istio mTLS — how does it work between services?",
+          "back": "istiod issues SPIFFE identity certs to each Envoy sidecar. On every request: source Envoy initiates TLS handshake with destination Envoy, both present certs signed by Istio CA. Mutual verification — both sides prove identity. Traffic encrypted in transit. PeerAuthentication resource controls mTLS mode: STRICT (require), PERMISSIVE (accept both), DISABLE.",
+          "link": "https://istio.io/latest/docs/concepts/security/#mutual-tls-authentication"
+        },
+        {
+          "num": 62,
+          "front": "Istio traffic management — canary deployment?",
+          "back": "VirtualService with weighted routing: route 90% to v1, 10% to v2. Monitor error rates in Grafana. Gradually shift weight. Example: spec.http[0].route with destination host: myapp, subset: v1, weight: 90 and subset: v2, weight: 10. DestinationRule defines subsets mapping to pod labels (version: v1, version: v2).",
+          "link": "https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/"
+        },
+        {
+          "num": 63,
+          "front": "Istio circuit breaking — how to configure?",
+          "back": "DestinationRule trafficPolicy.connectionPool: set maxConnections, http1MaxPendingRequests, http2MaxRequests. outlierDetection: consecutive5xxErrors, interval, baseEjectionTime, maxEjectionPercent. When a service instance exceeds error threshold, Envoy ejects it from the load balancing pool temporarily — prevents cascading failures.",
+          "link": "https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/"
+        },
+        {
+          "num": 64,
+          "front": "How to debug Istio traffic routing issues?",
+          "back": "1. istioctl analyze — detects config errors. 2. istioctl proxy-config routes <pod> — shows Envoy route config. 3. istioctl proxy-config clusters <pod> — shows upstream clusters. 4. kubectl logs <pod> -c istio-proxy — Envoy access logs. 5. Kiali dashboard for visual service graph and traffic flow.",
+          "link": "https://istio.io/latest/docs/ops/diagnostic-tools/istioctl-analyze/"
+        }
+      ]
+    },
+    {
+      "name": "EKS vs GKE",
+      "cards": [
+        {
+          "num": 65,
+          "front": "Key differences between EKS and GKE?",
+          "back": "Networking: EKS uses VPC CNI (real VPC IPs), GKE uses kubenet or VPC-native with alias IPs. Auth: EKS uses IAM + aws-auth ConfigMap, GKE uses Google IAM + Workload Identity. Node management: EKS managed node groups vs GKE Autopilot (fully managed). GKE has built-in Istio (Anthos Service Mesh), EKS requires manual install.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/"
+        },
+        {
+          "num": 66,
+          "front": "EKS IRSA vs GKE Workload Identity?",
+          "back": "Same concept, different implementation. EKS IRSA: annotate K8s service account with IAM role ARN, uses OIDC provider to exchange service account token for IAM credentials. GKE Workload Identity: annotate K8s service account with Google service account email, GKE metadata server exchanges tokens. Both eliminate node-level credentials — pods get only the permissions they need.",
+          "link": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+        },
+        {
+          "num": 67,
+          "front": "Migrating workloads from GKE to EKS — what changes?",
+          "back": "K8s manifests stay the same. Changes: (1) StorageClass — GKE uses pd-standard/pd-ssd, EKS uses gp3/io2 via EBS CSI. (2) Ingress — GKE uses GCE ingress class, EKS uses ALB controller. (3) IAM — Workload Identity to IRSA. (4) CNI behavior differences. (5) Load balancer annotations are cloud-specific. Helm values-per-cloud pattern handles this.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/"
+        },
+        {
+          "num": 68,
+          "front": "How to manage a multi-cloud K8s fleet (GKE + EKS + AKS)?",
+          "back": "Standardize on cloud-agnostic tooling: ArgoCD for GitOps, Istio for service mesh, Prometheus for monitoring, Kyverno for policy. Use Helm with per-cloud values files (values-gke.yaml, values-eks.yaml). ArgoCD ApplicationSet with cluster generator deploys to all clusters regardless of cloud. Abstract cloud-specific details into Helm values.",
+          "link": "https://kubernetes.io/docs/setup/production-environment/"
+        }
+      ]
+    },
+    {
+      "name": "Ops at Scale (600+ Clusters)",
+      "cards": [
+        {
+          "num": 69,
+          "front": "How to roll out a K8s version upgrade across 600+ clusters?",
+          "back": "Wave-based rollout: upgrade 1 canary cluster, run automated tests, wait 24h. Then 5% of clusters, monitor, then 25%, then 100%. ArgoCD ApplicationSet with progressive sync waves. Each wave has health checks — if error rate spikes, halt rollout. Never upgrade all clusters simultaneously. One minor version at a time.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 70,
+          "front": "Fleet-wide CVE patching — how to handle urgently?",
+          "back": "1. Identify affected clusters via centralized inventory (CMDB or ArgoCD cluster list). 2. Build patched base image or update Helm chart. 3. Push to Git — ArgoCD auto-syncs. 4. For critical CVEs: force immediate sync via ArgoCD API, bypass wave rollout. 5. Kyverno policy to block new deployments using vulnerable image versions. 6. Dashboard showing patch status per cluster.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 71,
+          "front": "How to enforce resource quotas across 600+ clusters?",
+          "back": "Kyverno ClusterPolicy that auto-creates ResourceQuota and LimitRange in every new namespace. Deployed via ArgoCD to all clusters. Policy validates that every container has resource requests and limits set — rejects pods without them. Prevents noisy neighbor problem where one team's workload starves others.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 72,
+          "front": "How to detect and remediate configuration drift at scale?",
+          "back": "ArgoCD shows drift status per Application — OutOfSync means cluster state differs from Git. ArgoCD auto-sync with self-heal enabled automatically reverts manual kubectl changes. For fleet-wide view: ArgoCD ApplicationSet dashboard or custom Prometheus metrics (argocd_app_info) aggregated via Thanos/federation.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 73,
+          "front": "How to manage cluster lifecycle — create, upgrade, decommission?",
+          "back": "Create: Terraform module triggered by GitHub Actions, outputs cluster credentials to Vault. Onboard: ArgoCD auto-discovers new cluster, deploys platform stack (Istio, Prometheus, Kyverno). Upgrade: wave-based via ArgoCD. Decommission: drain workloads, remove from ArgoCD, terraform destroy. All steps automated — no manual kubectl.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 76,
+          "front": "How to handle a platform-wide incident affecting all 600+ clusters?",
+          "back": "1. Incident commander declares severity. 2. Identify blast radius — which clusters/apps affected. 3. If caused by a bad rollout: ArgoCD rollback to last known good Git commit. 4. If infrastructure: check cloud provider status, node health. 5. Communicate via PagerDuty/Slack war room. 6. Post-mortem with timeline, root cause, and preventive actions. 7. Update runbooks.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 77,
+          "front": "8-person team managing 600+ clusters — how is that possible?",
+          "back": "Only possible with extreme automation. Zero manual kubectl in production. ArgoCD auto-syncs all changes from Git. Kyverno auto-enforces policies. ApplicationSets deploy to all clusters from one template. Self-healing enabled — ArgoCD reverts drift automatically. Prometheus alerts on anomalies. The team writes automation, not YAML per cluster.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 78,
+          "front": "What should a small platform team automate first?",
+          "back": "1. Cluster onboarding (Terraform + ArgoCD auto-discovery). 2. Platform stack deployment (ArgoCD App of Apps). 3. Policy enforcement (Kyverno — no manual audits). 4. Monitoring and alerting (kube-prometheus-stack). 5. Incident response runbooks. Automate the repetitive work so the team focuses on platform improvements, not firefighting.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 79,
+          "front": "How to prioritize work as a small team with 600+ clusters?",
+          "back": "Toil budget: track repetitive manual tasks, automate the top 3. Error budget: if SLO is met, invest in platform features. If SLO is burning, focus on reliability. Use Jira/GitHub Projects to separate: (1) incidents/toil, (2) platform improvements, (3) new features. Aim for 50% engineering, 50% ops — if ops exceeds 50%, you need more automation.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 80,
+          "front": "How to onboard a new engineer to a 600+ cluster platform?",
+          "back": "1. Runbook library — documented procedures for common tasks. 2. GitOps means all config is in Git — new engineer reads the repo to understand the platform. 3. ArgoCD UI shows live state of every cluster. 4. Grafana dashboards show health at a glance. 5. Pair on first on-call rotation. 6. Shadow incident response before leading one.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 81,
+          "front": "Etcd size limits at scale — what breaks?",
+          "back": "etcd default max size is 2GB. At 600+ clusters with many CRDs (Istio, ArgoCD, Kyverno), etcd can fill up. Symptoms: API server rejects writes, cluster becomes read-only. Prevention: monitor etcd DB size in Prometheus, compact and defrag regularly, limit CRD proliferation, use server-side apply to reduce annotation bloat.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 82,
+          "front": "API server rate limiting at scale?",
+          "back": "Too many controllers (ArgoCD, Kyverno, Istio, Prometheus) can overwhelm the API server. Symptoms: slow kubectl, 429 Too Many Requests errors. Mitigation: tune API Priority and Fairness (APF) flow schemas, increase API server resources, reduce reconciliation frequency on controllers, use informer caches instead of direct API calls.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 83,
+          "front": "How to handle cluster sprawl — 600 clusters but some unused?",
+          "back": "Track cluster utilization via Prometheus (CPU/memory request vs capacity). Dashboard showing underutilized clusters. Policy: clusters below 20% utilization for 30 days flagged for consolidation. Automate decommission workflow: notify owners, drain workloads, remove from ArgoCD, terraform destroy. Reduces cost and operational burden.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        },
+        {
+          "num": 84,
+          "front": "Secrets rotation at scale — how to rotate across 600+ clusters?",
+          "back": "Vault handles rotation centrally — update secret in Vault, pods pick up new value on next restart or via Vault Agent sidecar refresh. For K8s Secrets: External Secrets Operator syncs from Vault on a polling interval. Force rotation: rolling restart of affected deployments via ArgoCD. Never store secrets in Git — only Vault references.",
+          "link": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+        }
+      ]
+    },
+    {
+      "name": "12-Factor App & Cloud-Native",
+      "cards": [
+        {
+          "num": 89,
+          "front": "What is the 12-factor app methodology?",
+          "back": "Best practices for building cloud-native apps that deploy cleanly to platforms like K8s. Created by Heroku. Covers: codebase, dependencies, config, backing services, build/release/run, processes, port binding, concurrency, disposability, dev/prod parity, logs, admin processes.",
+          "link": "https://12factor.net/"
+        },
+        {
+          "num": 90,
+          "front": "12-factor: Logs — how should apps handle logging?",
+          "back": "Apps should write logs to stdout/stderr as an unbuffered event stream — never to files. The platform (K8s) captures stdout and routes it. In K8s: kubelet collects container stdout, Fluent Bit/Fluentd sidecar or DaemonSet ships to centralized logging (OpenSearch, CloudWatch, Splunk). App never knows where logs go.",
+          "link": "https://12factor.net/logs"
+        },
+        {
+          "num": 91,
+          "front": "12-factor: Config — how should apps handle configuration?",
+          "back": "Store config in environment variables — never in code or config files baked into the image. In K8s: ConfigMaps for non-sensitive config, Secrets (or Vault) for sensitive values. Injected as env vars or mounted volumes. Same image runs in dev, staging, prod — only config changes.",
+          "link": "https://12factor.net/config"
+        },
+        {
+          "num": 92,
+          "front": "12-factor: Dependencies — what does it mean for containers?",
+          "back": "Explicitly declare and isolate all dependencies. In Docker: Dockerfile installs exact pinned versions (npm ci, pip install -r requirements.txt). No reliance on system-level packages existing on the host. The container is fully self-contained — runs identically on any node.",
+          "link": "https://12factor.net/dependencies"
+        },
+        {
+          "num": 93,
+          "front": "12-factor: Disposability — why does it matter for K8s?",
+          "back": "Processes should start fast and shut down gracefully. In K8s: pods are ephemeral — killed during scaling, upgrades, node failures. Apps must handle SIGTERM (graceful shutdown), drain connections, and not rely on local state. preStop hooks and terminationGracePeriodSeconds give apps time to finish in-flight requests.",
+          "link": "https://12factor.net/disposability"
+        },
+        {
+          "num": 94,
+          "front": "12-factor: Port binding — how does it apply to K8s?",
+          "back": "App exports HTTP as a service by binding to a port (e.g. :8080). No external web server needed — the app IS the server. In K8s: container exposes containerPort, Service routes to it, Ingress handles external routing. App doesn't know about Ingress or TLS — that's the platform's job.",
+          "link": "https://12factor.net/port-binding"
+        },
+        {
+          "num": 95,
+          "front": "12-factor: Dev/prod parity — how does Docker help?",
+          "back": "Same Docker image runs in dev, staging, and prod — eliminates 'works on my machine'. Only config differs (env vars via ConfigMap/Secret). CI builds one image, promotes it through environments. Never rebuild for prod. Image digest ensures byte-for-byte identical artifact across environments.",
+          "link": "https://12factor.net/dev-prod-parity"
+        },
+        {
+          "num": 96,
+          "front": "12-factor: Concurrency — how does K8s implement it?",
+          "back": "Scale out via processes, not threads. In K8s: HPA scales pod replicas horizontally based on CPU/memory/custom metrics. Each pod is a process. App should be stateless so any replica can handle any request. State lives in external backing services (database, cache, queue) — not in the pod.",
+          "link": "https://12factor.net/concurrency"
+        },
+        {
+          "num": 97,
+          "front": "12-factor: Backing services — what does it mean?",
+          "back": "Treat databases, caches, queues, email as attached resources accessed via URL/credentials in config. App doesn't distinguish between local and third-party services. In K8s: connection strings in ConfigMap/Secret, swap backing service by changing config — no code change. Enables migrating from self-hosted Postgres to RDS without app changes.",
+          "link": "https://12factor.net/backing-services"
+        },
+        {
+          "num": 98,
+          "front": "Why is 12-factor relevant to CVS Container Engineering?",
+          "back": "CVS runs 600+ clusters with many dev teams deploying apps. If apps follow 12-factor: (1) same image across environments — fewer bugs, (2) config via env vars — platform team manages ConfigMaps/Secrets, (3) logs to stdout — centralized logging works automatically, (4) stateless — HPA scaling works, (5) disposable — rolling updates and node drains are safe.",
+          "link": "https://12factor.net/"
+        }
+      ]
+    },
+    {
+      "name": "Deployment Strategies",
+      "cards": [
+        {
+          "num": 99,
+          "front": "Rolling update — how does it work in K8s?",
+          "back": "Default Deployment strategy. K8s replaces pods gradually — creates new pod, waits for readiness probe, then terminates old pod. Controlled by maxSurge (extra pods during update) and maxUnavailable (pods that can be down). Zero downtime if readiness probes are configured correctly. Rollback: kubectl rollout undo deployment/myapp.",
+          "link": "https://argo-rollouts.readthedocs.io/en/stable/"
+        },
+        {
+          "num": 100,
+          "front": "Blue/green deployment in K8s — how to implement?",
+          "back": "Run two Deployments: blue (current) and green (new). Both running simultaneously. Service selector points to blue. When green passes tests, switch Service selector to green. Instant cutover, instant rollback (switch selector back). Downside: double the resources during deployment. At CVS scale: automate via ArgoCD with Argo Rollouts.",
+          "link": "https://argo-rollouts.readthedocs.io/en/stable/"
+        },
+        {
+          "num": 101,
+          "front": "Canary deployment with Istio — how?",
+          "back": "VirtualService weighted routing: 95% to stable, 5% to canary. Monitor canary error rate and latency in Grafana. If healthy, gradually shift: 10%, 25%, 50%, 100%. If errors spike, route 100% back to stable. Istio DestinationRule defines subsets (stable vs canary) mapped to pod labels. Argo Rollouts can automate the progressive shift based on Prometheus metrics.",
+          "link": "https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio/"
+        },
+        {
+          "num": 102,
+          "front": "What is Argo Rollouts?",
+          "back": "K8s controller for advanced deployment strategies — replaces Deployment resource with Rollout resource. Supports canary (with Istio/Nginx traffic shifting), blue/green, and analysis runs. Analysis runs query Prometheus — auto-promote if metrics are healthy, auto-rollback if not. Integrates with ArgoCD for GitOps-driven progressive delivery.",
+          "link": "https://argo-rollouts.readthedocs.io/en/stable/"
+        },
+        {
+          "num": 103,
+          "front": "Which deployment strategy for CVS production?",
+          "back": "Canary with Istio + Argo Rollouts for critical services — automated metric-based promotion. Rolling update for platform components (Prometheus, Kyverno) where traffic shifting isn't needed. Blue/green for database schema changes where you need instant rollback. Choice depends on risk tolerance and whether the service handles user traffic.",
+          "link": "https://argo-rollouts.readthedocs.io/en/stable/"
+        }
+      ]
+    },
+    {
+      "name": "K8s Fundamentals",
+      "cards": [
+        {
+          "num": 108,
+          "front": "Pod, Deployment, ReplicaSet, Service — how do they relate?",
+          "back": "Deployment manages ReplicaSet (desired replica count). ReplicaSet creates Pods. Service provides stable network endpoint to reach Pods via label selector. Change image tag in Deployment → new ReplicaSet created → rolling update replaces old Pods. Service routes to whichever Pods match the selector regardless of ReplicaSet.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 109,
+          "front": "StatefulSet vs Deployment — when to use which?",
+          "back": "Deployment: stateless apps, pods are interchangeable, no stable identity. StatefulSet: stateful apps (databases, Kafka), pods get stable hostname (pod-0, pod-1), ordered startup/shutdown, each pod gets its own PVC. At CVS: most apps are Deployments. StatefulSets for Prometheus, etcd, databases.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 110,
+          "front": "DaemonSet — what runs as a DaemonSet at CVS?",
+          "back": "Ensures one pod per node. Used for: Fluent Bit (log shipping), node-exporter (Prometheus node metrics), Calico/Cilium CNI agents, kube-proxy, Istio ztunnel (ambient mesh). At CVS scale: DaemonSet update across 600+ clusters means thousands of pods — use maxUnavailable to control rollout pace.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 111,
+          "front": "ConfigMap vs Secret — when to use which?",
+          "back": "ConfigMap: non-sensitive config (feature flags, URLs, app settings). Secret: sensitive data (passwords, tokens, TLS certs) — base64-encoded, can be encrypted at rest with KMS. Both injected as env vars or volume mounts. At CVS: Secrets managed via Vault/External Secrets Operator, ConfigMaps in Git via ArgoCD.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 112,
+          "front": "Service types — ClusterIP vs NodePort vs LoadBalancer?",
+          "back": "ClusterIP: internal only (default). NodePort: exposes on every node's IP:30000-32767. LoadBalancer: provisions cloud LB (NLB/ALB on AWS, GLB on GCP). At CVS: ClusterIP for internal services, Istio Gateway or Ingress for external traffic — rarely use NodePort or LoadBalancer directly.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 113,
+          "front": "NetworkPolicy — how to isolate namespaces?",
+          "back": "Default: all pods can talk to all pods. NetworkPolicy restricts by label, namespace, or CIDR. Example: deny all ingress, then allow only from specific namespace. At CVS: Kyverno auto-creates default-deny NetworkPolicy in every new namespace. Teams must explicitly allow traffic — zero trust by default.",
+          "link": "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+        },
+        {
+          "num": 114,
+          "front": "RBAC — Role, ClusterRole, RoleBinding, ClusterRoleBinding?",
+          "back": "Role: namespace-scoped permissions (e.g. get pods in namespace X). ClusterRole: cluster-wide (e.g. get nodes, manage PVs). RoleBinding: assigns Role to user/service account in a namespace. ClusterRoleBinding: assigns ClusterRole cluster-wide. At CVS: dev teams get namespace-scoped Roles, platform team gets ClusterRole admin.",
+          "link": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/"
+        },
+        {
+          "num": 115,
+          "front": "PersistentVolume, PVC, StorageClass — how do they work together?",
+          "back": "StorageClass defines provisioner (EBS, GCE PD, NFS). PVC requests storage (size, access mode). StorageClass dynamically provisions a PV matching the PVC. Pod mounts PVC as a volume. At CVS: different StorageClasses per cloud (gp3 on AWS, pd-ssd on GCP). Reclaim policy Delete for ephemeral, Retain for databases.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 116,
+          "front": "Resource requests vs limits — what happens when exceeded?",
+          "back": "Requests: guaranteed minimum — scheduler uses this for placement. Limits: maximum allowed. CPU over limit: throttled (pod stays running but slow). Memory over limit: OOMKilled (pod restarted). QoS classes: Guaranteed (requests=limits), Burstable (requests<limits), BestEffort (none set). At CVS: Kyverno rejects pods without requests/limits.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 117,
+          "front": "Taints, tolerations, node affinity — how to control pod placement?",
+          "back": "Taints on nodes repel pods (e.g. dedicated=gpu:NoSchedule). Tolerations on pods allow scheduling on tainted nodes. Node affinity: schedule based on node labels (required or preferred). Pod anti-affinity: spread replicas across nodes/zones. At CVS: taint GPU nodes, use affinity to pin monitoring to specific node pools.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 118,
+          "front": "PodDisruptionBudget — why critical at CVS scale?",
+          "back": "PDB limits voluntary disruptions (node drain, cluster upgrade). minAvailable: 1 ensures at least 1 pod stays running during upgrades. Without PDB: kubectl drain can kill all replicas simultaneously. At CVS: every production Deployment must have a PDB — enforced by Kyverno policy. Critical during rolling K8s upgrades across 600+ clusters.",
+          "link": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
+        },
+        {
+          "num": 119,
+          "front": "Liveness vs readiness vs startup probes?",
+          "back": "Liveness: is the container alive? Failure → restart. Readiness: can it serve traffic? Failure → removed from Service endpoints. Startup: has it finished starting? Disables liveness/readiness until success — for slow-starting apps. At CVS: all three required. Misconfigured liveness probe is the #1 cause of unnecessary pod restarts.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 120,
+          "front": "CRD and Operator — what are they and examples at CVS?",
+          "back": "CRD extends K8s API with custom resource types. Operator is a controller that watches CRDs and automates lifecycle. CVS examples: ArgoCD Application (CRD), Istio VirtualService (CRD), Kyverno ClusterPolicy (CRD), cert-manager Certificate (CRD). The platform team manages operators, dev teams create CRD instances.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        },
+        {
+          "num": 121,
+          "front": "etcd backup and restore — how?",
+          "back": "Backup: ETCDCTL_API=3 etcdctl snapshot save backup.db --endpoints --cacert --cert --key. Restore: etcdctl snapshot restore backup.db --data-dir=/var/lib/etcd-restored, update etcd manifest to use new data-dir. At CVS with managed K8s (GKE/EKS): cloud provider handles etcd — but know this for self-managed clusters and CKA.",
+          "link": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#backing-up-an-etcd-cluster"
+        },
+        {
+          "num": 122,
+          "front": "kubectl skills — jsonpath, dry-run, debug?",
+          "back": "jsonpath: kubectl get pods -o jsonpath='{.items[*].metadata.name}'. dry-run: kubectl create deploy x --image=y --dry-run=client -o yaml > manifest.yaml. debug: kubectl debug pod/myapp -it --image=busybox. explain: kubectl explain pod.spec.containers --recursive. These are daily tools for a platform engineer — Jayesh will expect fluency.",
+          "link": "https://kubernetes.io/docs/concepts/"
+        }
+      ]
+    },
+    {
+      "name": "Behavioral",
+      "cards": [
+        {
+          "num": 123,
+          "front": "What would you improve in your current organization?",
+          "back": "At Fiserv: invested earlier in GitOps-driven cluster configuration management. Had good CI/CD for apps but cluster-level config drift was managed manually. At CVS scale (600+ clusters), need ArgoCD ApplicationSets to manage cluster config as code — a single base chart change should propagate to all clusters automatically with canary rollout."
+        },
+        {
+          "num": 124,
+          "front": "Why transition from networking to containerization/Kubernetes?",
+          "back": "Background has always been infrastructure — Unix/Linux → cloud → Kubernetes was natural evolution. Networking knowledge is a huge advantage in K8s: CNI plugins, service mesh, network policies, DNS all require deep networking fundamentals. Didn't leave networking — brought it into the container world."
+        },
+        {
+          "num": 125,
+          "front": "What certifications do you hold?",
+          "back": "Pursuing CKA — 6+ years production Kubernetes experience, formalizing with certification. Platform Engineering Fundamentals (2024), AWS certifications, SDN certification (Coursera). Committed to obtaining CKA before starting this role if important to the team."
+        },
+        {
+          "num": 126,
+          "front": "Questions to ask Jayesh?",
+          "back": "1. How does the team manage config drift across 600+ clusters — ApplicationSets, Flux, or custom? 2. What's the timeline for expanding into AKS and EKS? 3. How does the team handle Istio version upgrades across 600+ clusters? 4. How did the move from WXO into Cloud Engineering change team priorities?"
+        }
+      ]
+    }
+  ]
+}
