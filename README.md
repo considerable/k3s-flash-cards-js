@@ -137,7 +137,7 @@ $ make help
 
 ## How It Works
 
-The app is an Express server that reads JSON deck files from `decks/` at request time and serves them to a vanilla JS frontend with interactive flip cards.
+The app is a ~50-line Express server that reads JSON deck files from `decks/` at request time and serves them to a vanilla JS frontend with interactive flip cards. No build step, no bundler, no framework overhead.
 
 - `server.js` — Express server with health check, deck API, and slug-based routing
 - `public/deck.html` — Self-contained frontend (HTML + CSS + JS, no build step)
