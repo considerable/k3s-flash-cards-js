@@ -1,5 +1,5 @@
 IMAGE      ?= flash-cards-js
-TAG        ?= latest
+TAG        := $(shell date +%s)
 K3S_NODE   ?= k3s-node
 K3S_ZONE   ?= us-east1-b
 HELM_RELEASE := flash-cards-js
@@ -28,17 +28,20 @@ infra: tf-import tf-plan ## Import state + verify (no changes expected)
 # --- Docker ---
 build: ## Build Docker image (linux/amd64 for k3s)
 	@docker info >/dev/null 2>&1 || (echo "Starting Docker..." && open -a Docker && while ! docker info >/dev/null 2>&1; do sleep 2; done)
-	docker build --platform linux/amd64 --build-arg CACHE_BUST=$$(date +%s) -t $(IMAGE):$(TAG) .
+	docker build --platform linux/amd64 --build-arg CACHE_BUST=$(TAG) -t $(IMAGE):$(TAG) .
 
-load: build ## Build and load image into k3s node
+load: ## Build and load image into k3s node
+	@docker info >/dev/null 2>&1 || (echo "Starting Docker..." && open -a Docker && while ! docker info >/dev/null 2>&1; do sleep 2; done)
+	docker build --platform linux/amd64 --build-arg CACHE_BUST=$(TAG) -t $(IMAGE):$(TAG) .
 	docker save $(IMAGE):$(TAG) | gcloud compute ssh $(K3S_NODE) --zone=$(K3S_ZONE) --command="sudo k3s ctr images import -"
 
 # --- Helm ---
-deploy: ## Deploy to k3s with Helm
+deploy: ## Deploy to k3s with Helm (tag change triggers automatic pod restart)
 	helm upgrade --install $(HELM_RELEASE) $(HELM_CHART) \
 		-f $(VALUES_GCP) \
 		--set image.repository=$(IMAGE) \
 		--set image.tag=$(TAG)
+	@echo "Rollout started — check status with: kubectl get pods -l app=flash-cards-js"
 
 # --- Test ---
 test: ## Smoke test the live deployment
@@ -53,3 +56,8 @@ all: infra build load deploy ## Full pipeline: infra, build, load, deploy
 
 clean: ## Remove local Docker image
 	docker rmi $(IMAGE):$(TAG) 2>/dev/null || true
+
+prune: ## Keep 2 most recent images on k3s node, delete the rest
+	gcloud compute ssh $(K3S_NODE) --zone=$(K3S_ZONE) --command="\
+		sudo k3s ctr images ls -q | grep flash-cards-js | sort -t: -k2 -n | head -n -2 | \
+		xargs -r sudo k3s ctr images rm"

@@ -15,7 +15,7 @@
     .card.flipped { transform: rotateY(180deg); }
     .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 2rem; font-size: 1.5rem; text-align: center; line-height: 1.4; }
     .card-front { background: #16213e; border: 2px solid #0f3460; flex-direction: column; }
-    .card-back { background: #0f3460; border: 2px solid #e94560; transform: rotateY(180deg); flex-direction: column; font-size: 1rem; overflow-y: auto; align-items: flex-start; padding: 1.5rem; }
+    .card-back { background: #0f3460; border: 2px solid #e94560; transform: rotateY(180deg); flex-direction: column; font-size: 1rem; overflow-y: auto; align-items: flex-start; padding: 1.5rem; text-align: left; white-space: pre-wrap; }
     .card-meta { font-size: 0.75rem; color: #888; margin-top: 0.5rem; }
     .card-link { font-size: 0.7rem; margin-top: 0.5rem; }
     .card-link a { color: #e94560; text-decoration: none; }
@@ -76,7 +76,8 @@
       $('card').classList.remove('flipped');
       const c = cards[idx];
       $('front').innerHTML = (c?.front || '') + (c?.section ? `<div class="card-meta">${c.section} #${c.num || ''}</div>` : '');
-      $('back').innerHTML = (c?.back || '') + (c?.link ? `<div class="card-link"><a href="${c.link}" target="_blank">📖 docs</a></div>` : '');
+      const backHtml = (c?.back || '').replace(/\n/g, '<br>') + (c?.link ? `<div class="card-link"><a href="${c.link}" target="_blank">📖 docs</a></div>` : '');
+      $('back').innerHTML = backHtml;
       $('counter').textContent = cards.length ? `${idx + 1} / ${cards.length}` : '';
     }
 
