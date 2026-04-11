@@ -6,8 +6,8 @@
       "cards": [
         {
           "num": 1,
-          "front": "What are the 6 Terraform block types?",
-          "back": "terraform {} \u2014 settings/backend.\nprovider {} \u2014 cloud config.\nvariable {} \u2014 inputs.\nlocals {} \u2014 computed values.\ndata {} \u2014 read existing infra.\nresource {} \u2014 create infra.\noutput {} \u2014 export values",
+          "front": "What are the 7 Terraform block types?",
+          "back": "terraform {} \u2014 backend + required_providers\nprovider {} \u2014 cloud provider config\nvariable {} \u2014 input values\nlocals {} \u2014 computed/derived values\ndata {} \u2014 read existing infrastructure\nresource {} \u2014 create/manage infrastructure\noutput {} \u2014 export values",
           "link": "https://developer.hashicorp.com/terraform/language/syntax/configuration"
         },
         {
