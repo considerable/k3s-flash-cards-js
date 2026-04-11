@@ -1,7 +1,7 @@
 variable "project_id" {
   description = "GCP project ID"
   type        = string
-  default     = "YOUR_GCP_PROJECT"
+  default     = "" # set via TF_VAR_project_id or -var flag
 }
 
 variable "region" {

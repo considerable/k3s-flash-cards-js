@@ -1,7 +1,9 @@
-IMAGE      ?= flash-cards-js
-TAG        := $(shell date +%s)
-K3S_NODE   ?= k3s-node
-K3S_ZONE   ?= us-east1-b
+IMAGE        ?= flash-cards-js
+TAG          := $(shell date +%s)
+K3S_NODE     ?= k3s-node
+K3S_ZONE     ?= us-east1-b
+GCP_PROJECT  ?= $(shell gcloud config get-value project 2>/dev/null)
+APP_HOST     ?= flash.$(shell gcloud compute addresses describe k3s-ip --region=us-east1 --format='value(address)' 2>/dev/null || echo localhost).nip.io
 HELM_RELEASE := flash-cards-js
 HELM_CHART   := ./helm/flash-cards-js
 VALUES_GCP   := $(HELM_CHART)/values-gcp.yaml
@@ -45,11 +47,11 @@ deploy: ## Deploy to k3s with Helm (tag change triggers automatic pod restart)
 
 # --- Test ---
 test: ## Smoke test the live deployment
-	@echo "Testing https://flash.YOUR_IP.nip.io ..."
-	@curl -sf https://flash.YOUR_IP.nip.io/healthz | grep -q ok && echo "  ✅ /healthz"
-	@curl -sf https://flash.YOUR_IP.nip.io/api/decks | grep -q eks && echo "  ✅ /api/decks"
-	@curl -sI http://flash.YOUR_IP.nip.io/ 2>&1 | grep -q 308 && echo "  ✅ HTTP→HTTPS redirect"
-	@echo "" && read -p "Open in browser? [y/N] " ans && [ "$$ans" = "y" ] && open https://flash.YOUR_IP.nip.io || true
+	@echo "Testing https://$(APP_HOST) ..."
+	@curl -sf https://$(APP_HOST)/healthz | grep -q ok && echo "  ✅ /healthz"
+	@curl -sf https://$(APP_HOST)/api/decks | grep -q terraform && echo "  ✅ /api/decks"
+	@curl -sI http://$(APP_HOST)/ 2>&1 | grep -q 308 && echo "  ✅ HTTP→HTTPS redirect"
+	@echo "" && read -p "Open in browser? [y/N] " ans && [ "$$ans" = "y" ] && open https://$(APP_HOST) || true
 
 # --- Combos ---
 all: infra build load deploy ## Full pipeline: infra, build, load, deploy

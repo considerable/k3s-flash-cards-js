@@ -6,8 +6,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PROJECT="YOUR_GCP_PROJECT"
-ZONE="us-east1-b"
+PROJECT="${TF_VAR_project_id:-$(gcloud config get-value project)}"
+ZONE="${TF_VAR_zone:-us-east1-b}"
 
 echo "🔧 Initializing Terraform..."
 terraform init
