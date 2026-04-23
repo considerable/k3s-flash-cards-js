@@ -6,7 +6,7 @@ service:
 
 ingress:
   enabled: true
-  host: "" # set to your nip.io or custom domain, e.g. flash.<YOUR_IP>.nip.io
+  host: "flash.35.227.114.175.nip.io" # set to your nip.io or custom domain
   annotations:
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
 
