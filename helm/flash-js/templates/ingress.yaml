@@ -1,36 +1,5 @@
 {{- if .Values.ingress.enabled }}
-# Protected ingress (requires basic auth)
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ .Chart.Name }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: {{ .Chart.Name }}
-  annotations:
-    {{- with .Values.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Chart.Name }}-basic-auth@kubernetescrd
-spec:
-  {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
-  {{- end }}
-  rules:
-  - {{- if .Values.ingress.host }}
-    host: {{ .Values.ingress.host }}
-    {{- end }}
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Chart.Name }}-service
-            port:
-              number: {{ .Values.service.port }}
----
-# Public ingress (no auth) for /german and /healthz
+# Public ingress — /, /german, /healthz, /api/decks/german (no auth, higher priority)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -48,6 +17,13 @@ spec:
     {{- end }}
     http:
       paths:
+      - path: /
+        pathType: Exact
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
       - path: /german
         pathType: Prefix
         backend:
@@ -62,7 +38,41 @@ spec:
             name: {{ .Chart.Name }}-service
             port:
               number: {{ .Values.service.port }}
+      - path: /api/decks
+        pathType: Exact
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
       - path: /api/decks/german
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Chart.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
+---
+# Protected ingress — all other paths require basic auth (lower priority)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-protected
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Chart.Name }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.priority: "50"
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Chart.Name }}-basic-auth@kubernetescrd
+spec:
+  rules:
+  - {{- if .Values.ingress.host }}
+    host: {{ .Values.ingress.host }}
+    {{- end }}
+    http:
+      paths:
+      - path: /
         pathType: Prefix
         backend:
           service:
