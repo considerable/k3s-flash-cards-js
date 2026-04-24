@@ -1,0 +1,50 @@
+{
+  "name": "ArgoCD (2026-04-24)",
+  "sections": [
+    {
+      "name": "Core Concepts",
+      "cards": [
+        { "num": 1, "front": "What is ArgoCD?", "back": "GitOps continuous delivery tool for Kubernetes — watches a Git repo and syncs desired state to the cluster automatically" },
+        { "num": 2, "front": "What is GitOps?", "back": "Git is the single source of truth — all changes go through Git, the cluster is always reconciled to match Git state" },
+        { "num": 3, "front": "ArgoCD Application?", "back": "CRD that defines: source repo + path, destination cluster + namespace, sync policy. The unit of deployment in ArgoCD" },
+        { "num": 4, "front": "What is App of Apps?", "back": "Pattern where one root Application manages a directory of child Application manifests — adding a file to Git creates a new app automatically" },
+        { "num": 5, "front": "ArgoCD sync status?", "back": "Synced (cluster matches Git), OutOfSync (drift detected), Unknown (can't compare)" },
+        { "num": 6, "front": "ArgoCD health status?", "back": "Healthy, Progressing, Degraded, Suspended, Missing, Unknown — based on resource health checks" },
+        { "num": 7, "front": "What is selfHeal?", "back": "ArgoCD automatically reverts manual kubectl changes back to Git state. Prevents configuration drift" },
+        { "num": 8, "front": "What is prune?", "back": "ArgoCD deletes resources that exist in the cluster but are no longer in Git. Keeps cluster clean" },
+        { "num": 9, "front": "Automated vs manual sync?", "back": "Automated: ArgoCD syncs on every Git change. Manual: you trigger sync explicitly via UI/CLI/API" },
+        { "num": 10, "front": "What is a sync wave?", "back": "Controls deployment order — wave 0 deploys first (CRDs, namespaces), higher waves deploy after lower waves are healthy" }
+      ]
+    },
+    {
+      "name": "Multi-Cluster",
+      "cards": [
+        { "num": 11, "front": "How does ArgoCD manage multiple clusters?", "back": "Single ArgoCD control plane registers external clusters via argocd cluster add — stores kubeconfig as a secret in argocd namespace" },
+        { "num": 12, "front": "What are ApplicationSets?", "back": "Generate multiple Applications from a template — cluster generator, git generator, matrix generator. Scales to 100s of apps/clusters" },
+        { "num": 13, "front": "Cluster generator in ApplicationSets?", "back": "Creates one Application per registered cluster — useful for deploying the same app to all clusters automatically" },
+        { "num": 14, "front": "Git generator in ApplicationSets?", "back": "Creates one Application per directory or file in a Git repo — used in App of Apps pattern" },
+        { "num": 15, "front": "Akuity Platform?", "back": "Managed ArgoCD by the creators (Intuit/Akuity). Uses agent-based multi-cluster model — agents deployed per cluster, report to central control plane" }
+      ]
+    },
+    {
+      "name": "Operations",
+      "cards": [
+        { "num": 16, "front": "argocd app sync?", "back": "Manually trigger a sync: argocd app sync <appname> --timeout 120" },
+        { "num": 17, "front": "argocd app diff?", "back": "Show what would change if you synced — compares live cluster state vs Git desired state" },
+        { "num": 18, "front": "argocd app wait?", "back": "Wait for app to reach a state: argocd app wait <appname> --health --timeout 120" },
+        { "num": 19, "front": "How to force refresh from Git?", "back": "kubectl patch application <name> -n argocd --type merge -p '{\"metadata\":{\"annotations\":{\"argocd.argoproj.io/refresh\":\"hard\"}}}'" },
+        { "num": 20, "front": "ArgoCD --insecure flag?", "back": "Runs argocd-server over HTTP instead of HTTPS — used when TLS is terminated externally by Traefik/nginx" },
+        { "num": 21, "front": "ArgoCD initial admin password?", "back": "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d" },
+        { "num": 22, "front": "ArgoCD components?", "back": "argocd-server (UI+API), application-controller (reconciler), repo-server (renders manifests), redis (cache), dex (SSO), applicationset-controller" }
+      ]
+    },
+    {
+      "name": "Secrets & Security",
+      "cards": [
+        { "num": 23, "front": "How to handle secrets in GitOps?", "back": "Never store plaintext in Git. Options: External Secrets Operator (pulls from AWS Secrets Manager), Sealed Secrets (encrypted in Git), SOPS" },
+        { "num": 24, "front": "What is External Secrets Operator?", "back": "Syncs secrets from external stores (AWS Secrets Manager, Vault) into Kubernetes Secrets automatically" },
+        { "num": 25, "front": "What is Sealed Secrets?", "back": "Encrypts K8s Secrets with a cluster key — safe to store in Git. Only the cluster can decrypt" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Traefik (2026-04-24)",
+  "sections": [
+    {
+      "name": "Core Concepts",
+      "cards": [
+        { "num": 1, "front": "What is Traefik?", "back": "Cloud-native reverse proxy and ingress controller — auto-discovers services, handles TLS, routing, middleware" },
+        { "num": 2, "front": "Traefik vs nginx ingress?", "back": "Traefik: dynamic config, auto-discovers K8s services, built-in Let's Encrypt, middleware CRDs. nginx: more mature, higher performance at scale" },
+        { "num": 3, "front": "What is an EntryPoint?", "back": "Network entry point — defines port and protocol. web (80), websecure (443) are standard. Configured at Traefik startup" },
+        { "num": 4, "front": "What is a Router?", "back": "Matches incoming requests (by host, path, headers) and routes to a service. Defined via Ingress annotations or IngressRoute CRD" },
+        { "num": 5, "front": "What is a Service in Traefik?", "back": "Load balancer that forwards traffic to backend pods — wraps K8s Service. Supports weighted round-robin, sticky sessions" },
+        { "num": 6, "front": "What is Middleware?", "back": "Transforms requests/responses between router and service — auth, redirects, rate limiting, headers, compression" },
+        { "num": 7, "front": "IngressRoute CRD?", "back": "Traefik-native routing config — more powerful than standard Ingress. Supports TCP, UDP, middleware chains, priority" }
+      ]
+    },
+    {
+      "name": "TLS & Certificates",
+      "cards": [
+        { "num": 8, "front": "Let's Encrypt with Traefik?", "back": "Built-in ACME client — annotation: traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt. Auto-issues and renews certs" },
+        { "num": 9, "front": "TLS passthrough?", "back": "Traefik forwards TLS without terminating — backend handles TLS. Used when backend requires end-to-end encryption (e.g. ArgoCD gRPC)" },
+        { "num": 10, "front": "HTTP to HTTPS redirect in Traefik?", "back": "Use a Middleware with redirectScheme: https, then apply to the web (port 80) entrypoint router" },
+        { "num": 11, "front": "traefik.ingress.kubernetes.io/router.tls?", "back": "Annotation to enable TLS on a router — \"true\" enables TLS termination at Traefik" }
+      ]
+    },
+    {
+      "name": "Middleware",
+      "cards": [
+        { "num": 12, "front": "BasicAuth middleware?", "back": "Protects routes with HTTP basic auth — references a K8s Secret with htpasswd-encoded credentials" },
+        { "num": 13, "front": "Middleware annotation format?", "back": "traefik.ingress.kubernetes.io/router.middlewares: namespace-middlewarename@kubernetescrd" },
+        { "num": 14, "front": "RedirectScheme middleware?", "back": "Redirects HTTP to HTTPS: spec.redirectScheme.scheme: https, permanent: true" },
+        { "num": 15, "front": "StripPrefix middleware?", "back": "Removes path prefix before forwarding — e.g. /app/foo → /foo. Useful for path-based routing" },
+        { "num": 16, "front": "RateLimit middleware?", "back": "Limits requests per second per source IP — spec.rateLimit.average, burst" }
+      ]
+    },
+    {
+      "name": "k3s Specifics",
+      "cards": [
+        { "num": 17, "front": "Traefik in k3s?", "back": "k3s ships Traefik v2/v3 as the default ingress controller — pre-installed, no setup needed" },
+        { "num": 18, "front": "Traefik dashboard in k3s?", "back": "Disabled by default. Enable via HelmChartConfig or port-forward: kubectl port-forward -n kube-system svc/traefik 9000:9000" },
+        { "num": 19, "front": "nip.io with Traefik?", "back": "nip.io resolves IP-based hostnames (argocd.1.2.3.4.nip.io → 1.2.3.4) — no DNS setup needed for dev/demo clusters" },
+        { "num": 20, "front": "Traefik router priority?", "back": "Higher priority routes match first — annotation: traefik.ingress.kubernetes.io/router.priority: \"100\". Default priority = rule length" }
+      ]
+    }
+  ]
+}

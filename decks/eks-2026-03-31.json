@@ -1,0 +1,63 @@
+{
+  "name": "EKS (2026-03-31)",
+  "sections": [
+    {
+      "name": "EKS Core",
+      "cards": [
+        { "num": 1, "front": "What is EKS?", "back": "Managed Kubernetes service — AWS runs the control plane (API server, etcd), you manage worker nodes" },
+        { "num": 2, "front": "EKS managed node groups?", "back": "AWS manages EC2 instances for you — auto-provisions, patches OS, handles draining during updates" },
+        { "num": 3, "front": "EKS self-managed nodes?", "back": "You manage EC2 instances yourself — full control over AMI, instance type, bootstrap. More operational burden" },
+        { "num": 4, "front": "What is Fargate on EKS?", "back": "Serverless compute for Pods — no nodes to manage. AWS provisions right-sized VMs per Pod. Uses Fargate Profiles" },
+        { "num": 5, "front": "What is a Fargate Profile?", "back": "Defines which Pods run on Fargate — matches by namespace and optional labels" },
+        { "num": 6, "front": "EKS add-ons?", "back": "AWS-managed operational software — VPC CNI, CoreDNS, kube-proxy, EBS CSI driver. Updated via EKS API" },
+        { "num": 7, "front": "EKS cluster endpoint access?", "back": "Public (API accessible from internet), Private (VPC only), or Public+Private (public with private routing for nodes)" },
+        { "num": 8, "front": "EKS upgrade strategy?", "back": "Control plane upgraded first (in-place, managed by AWS), then node groups. One minor version at a time" },
+        { "num": 9, "front": "What is eksctl?", "back": "CLI tool to create and manage EKS clusters — wraps CloudFormation. Good for quick setup, not for production IaC" },
+        { "num": 10, "front": "EKS pricing?", "back": "$0.10/hour per cluster ($73/mo) for control plane + EC2/Fargate costs for worker nodes" },
+        { "num": 11, "front": "What is EKS Anywhere?", "back": "Run EKS on your own infrastructure (on-prem, VMs) — same K8s distribution and tooling as cloud EKS" }
+      ]
+    },
+    {
+      "name": "EKS Networking",
+      "cards": [
+        { "num": 12, "front": "What is the VPC CNI plugin?", "back": "EKS default CNI — assigns real VPC IP addresses to Pods. Pods are directly routable in the VPC" },
+        { "num": 13, "front": "VPC CNI prefix delegation?", "back": "Assigns /28 prefixes instead of individual IPs to ENIs — increases Pod density per node (110+ Pods)" },
+        { "num": 14, "front": "What is the AWS Load Balancer Controller?", "back": "Provisions ALBs for Ingress and NLBs for LoadBalancer Services — replaces legacy in-tree cloud provider" },
+        { "num": 15, "front": "What is ExternalDNS on EKS?", "back": "Controller that creates Route 53 DNS records automatically from Ingress/Service annotations" }
+      ]
+    },
+    {
+      "name": "EKS Security",
+      "cards": [
+        { "num": 16, "front": "What is IRSA?", "back": "IAM Roles for Service Accounts — lets EKS Pods assume IAM roles via OIDC without node-level credentials" },
+        { "num": 17, "front": "What is EKS Pod Identity?", "back": "Newer alternative to IRSA — simpler setup, no OIDC provider needed, uses EKS Pod Identity Agent add-on" },
+        { "num": 18, "front": "How does EKS auth work?", "back": "IAM authenticates (aws-iam-authenticator), K8s RBAC authorizes. aws-auth ConfigMap or EKS access entries map IAM to K8s identities" },
+        { "num": 19, "front": "What are EKS access entries?", "back": "Newer API-based auth (replaces aws-auth ConfigMap) — maps IAM principals to K8s groups/permissions directly" },
+        { "num": 20, "front": "Encrypt Secrets at rest on EKS?", "back": "EKS supports envelope encryption with KMS. Enable via encryptionConfig on cluster creation" },
+        { "num": 21, "front": "What is Secrets Store CSI Driver?", "back": "Mounts secrets from external stores (AWS Secrets Manager, Parameter Store) as volumes in Pods" }
+      ]
+    },
+    {
+      "name": "EKS Storage",
+      "cards": [
+        { "num": 22, "front": "What is the EBS CSI driver?", "back": "EKS add-on that provisions EBS volumes as PVs — supports gp3, io2, snapshots, encryption" },
+        { "num": 23, "front": "What is the EFS CSI driver?", "back": "Provisions EFS file systems as PVs — supports ReadWriteMany, shared across Pods and nodes" }
+      ]
+    },
+    {
+      "name": "EKS Observability",
+      "cards": [
+        { "num": 24, "front": "What is CloudWatch Container Insights?", "back": "EKS monitoring — collects metrics (CPU, memory, network) and logs from nodes and Pods via CloudWatch agent" },
+        { "num": 25, "front": "What is Amazon Managed Prometheus?", "back": "Managed Prometheus-compatible monitoring — scrapes K8s metrics, stores in AWS, query with PromQL" },
+        { "num": 26, "front": "What is Fluent Bit on EKS?", "back": "Lightweight log forwarder — ships container logs to CloudWatch, S3, OpenSearch. Common EKS logging pattern" }
+      ]
+    },
+    {
+      "name": "EKS Scaling",
+      "cards": [
+        { "num": 27, "front": "What is Karpenter?", "back": "Open-source node autoscaler — provisions right-sized EC2 instances directly (not ASG-based). Faster than Cluster Autoscaler" },
+        { "num": 28, "front": "Cluster Autoscaler vs Karpenter?", "back": "CA scales ASG node groups (predefined instance types). Karpenter provisions optimal instances per Pod requirements — more flexible, faster" }
+      ]
+    }
+  ]
+}
