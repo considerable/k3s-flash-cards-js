@@ -1,0 +1,700 @@
+{
+  "name": "Terraform (2026-04-13)",
+  "sections": [
+    {
+      "name": "Terraform Basics",
+      "cards": [
+        {
+          "num": 1,
+          "front": "What are the 7 Terraform block types?",
+          "back": "terraform {} \u2014 backend + required_providers\nprovider {} \u2014 cloud provider config\nvariable {} \u2014 input values\nlocals {} \u2014 computed/derived values\ndata {} \u2014 read existing infrastructure\nresource {} \u2014 create/manage infrastructure\noutput {} \u2014 export values",
+          "link": "https://developer.hashicorp.com/terraform/language/syntax/configuration"
+        },
+        {
+          "num": 2,
+          "front": "resource vs data block?",
+          "back": "resource creates and manages infrastructure \u2014 Terraform owns its lifecycle. data reads existing infrastructure Terraform doesn't manage.\nVPC created by another team = data source",
+          "link": "https://developer.hashicorp.com/terraform/language/data-sources"
+        },
+        {
+          "num": 3,
+          "front": "How do you reference a local value?",
+          "back": "local.name \u2014 singular, no 's'. locals.name is WRONG and will error.\nDefine in locals {} block, reference as local.name everywhere",
+          "link": "https://developer.hashicorp.com/terraform/language/values/locals"
+        },
+        {
+          "num": 4,
+          "front": "What is terraform init -upgrade?",
+          "back": "Downloads provider plugins and upgrades to latest allowed version.\nAlways use -upgrade in CoderPad \u2014 avoids stale provider cache that causes init failures",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/init"
+        },
+        {
+          "num": 5,
+          "front": "Command sequence before apply?",
+          "back": "terraform fmt\n\u2192 terraform init -upgrade\n\u2192 terraform validate\n\u2192 terraform plan\n\u2192 terraform apply.\nfmt first shows discipline.\nvalidate catches syntax in 1 second",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands"
+        },
+        {
+          "num": 6,
+          "front": "What is terraform validate?",
+          "back": "Checks syntax and internal consistency without contacting any remote services.\nCatches missing required arguments, wrong types, invalid references.\nRuns in 1 second",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/validate"
+        },
+        {
+          "num": 7,
+          "front": "What is terraform plan?",
+          "back": "Shows what will be created/changed/destroyed without making changes.\nOutputs show in plan even without apply \u2014 use this to verify locals and conditionals",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/plan"
+        },
+        {
+          "num": 8,
+          "front": "How do you force recreation of a resource?",
+          "back": "terraform apply -replace=aws_db_instance.main \u2014 replaces specific resource.\nOld command was terraform taint (deprecated in 0.15)",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address"
+        },
+        {
+          "num": 9,
+          "front": "What is terraform fmt?",
+          "back": "Formats .tf files to canonical style \u2014 consistent indentation, alignment.\nLike a linter.\nRun before every commit and before CoderPad submission",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/fmt"
+        },
+        {
+          "num": 10,
+          "front": "for_each vs count?",
+          "back": "count creates by index \u2014 removing middle item shifts all indexes, causes destroy/recreate. for_each creates by key \u2014 safe to remove any item.\nUse for_each for maps and sets, count only for simple identical resources",
+          "link": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each"
+        }
+      ]
+    },
+    {
+      "name": "Terraform State",
+      "cards": [
+        {
+          "num": 11,
+          "front": "What is Terraform state?",
+          "back": "JSON file mapping your config to real infrastructure.\nTracks resource IDs, metadata, dependencies.\nNever commit to Git \u2014 contains sensitive data including passwords",
+          "link": "https://developer.hashicorp.com/terraform/language/state"
+        },
+        {
+          "num": 12,
+          "front": "S3 backend configuration?",
+          "back": "backend \"s3\" {\n  bucket       = \"terraform-state\"\n  key          = \"rds/terraform.tfstate\"\n  region       = \"us-east-1\"\n  use_lockfile = true\n  encrypt      = true\n}\nuse_lockfile requires Terraform >= 1.10",
+          "link": "https://developer.hashicorp.com/terraform/language/backend/s3"
+        },
+        {
+          "num": 13,
+          "front": "What is use_lockfile = true?",
+          "back": "Terraform >= 1.10 native S3 locking via bucket versioning \u2014 no DynamoDB table needed.\nPrevents two engineers running apply simultaneously.\nOne gets a lock error",
+          "link": "https://developer.hashicorp.com/terraform/language/backend/s3#use_lockfile"
+        },
+        {
+          "num": 14,
+          "front": "What was the old state locking method?",
+          "back": "DynamoDB table with LockID as partition key.\nStill works but deprecated in favor of use_lockfile = true with S3 versioning.\nTerraform 1.10+ makes DynamoDB unnecessary",
+          "link": "https://developer.hashicorp.com/terraform/language/backend/s3"
+        },
+        {
+          "num": 15,
+          "front": "What is terraform import?",
+          "back": "Brings existing infrastructure under Terraform management without recreating it. terraform import aws_db_instance.main <rds-identifier>.\nState is updated, config must be written manually",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/import"
+        }
+      ]
+    },
+    {
+      "name": "Locals and Conditionals",
+      "cards": [
+        {
+          "num": 16,
+          "front": "2-way conditional in locals?",
+          "back": "multi_az = var.environment != \"dev\" \u2014 bool shorthand.\nOr: multi_az = var.environment == \"prod\" ? true : false.\nFirst form is cleaner",
+          "link": "https://developer.hashicorp.com/terraform/language/expressions/conditionals"
+        },
+        {
+          "num": 17,
+          "front": "3-way conditional (nested ternary)?",
+          "back": "db_instance_class = (\n  var.environment == \"prod\"    ? \"db.r6g.large\"  :\n  var.environment == \"staging\" ? \"db.t3.medium\"  :\n  \"db.t3.micro\"\n)\nWrap in parens for readability",
+          "link": "https://developer.hashicorp.com/terraform/language/expressions/conditionals"
+        },
+        {
+          "num": 18,
+          "front": "String interpolation in locals?",
+          "back": "db_identifier = \"myapp-${var.environment}-postgres\" \u2014 uses ${}.\nAlso: secret_name = \"/${var.environment}/rds/password\".\nProduces: myapp-prod-postgres",
+          "link": "https://developer.hashicorp.com/terraform/language/expressions/strings"
+        },
+        {
+          "num": 19,
+          "front": "Common tags pattern in locals?",
+          "back": "locals {\n  common_tags = {\n    Environment = var.environment\n    ManagedBy   = \"Terraform\"\n    Project     = \"fed-platform\"\n  }\n}\nDefine once, use in every resource: tags = local.common_tags",
+          "link": "https://developer.hashicorp.com/terraform/language/values/locals"
+        },
+        {
+          "num": 20,
+          "front": "How to verify locals without apply?",
+          "back": "Add output \"config_summary\" { value = { instance_class = local.db_instance_class, multi_az = local.multi_az } } then run terraform plan -var=\"environment=prod\".\nOutputs show in plan, no apply needed",
+          "link": "https://developer.hashicorp.com/terraform/language/values/outputs"
+        },
+        {
+          "num": 21,
+          "front": "What locals does a DB engineer need per environment?",
+          "back": "db_instance_class, multi_az, backup_retention, db_identifier, deletion_protection, skip_final_snapshot \u2014 all derived from var.environment.\nNo hardcoded values in resource block",
+          "link": "https://developer.hashicorp.com/terraform/language/values/locals"
+        },
+        {
+          "num": 22,
+          "front": "skip_final_snapshot pattern?",
+          "back": "skip_final_snapshot = var.environment == \"dev\" \u2014 true for dev (destroy freely), false for staging/prod.\nIf false, must also set final_snapshot_identifier or plan will error",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#skip_final_snapshot"
+        }
+      ]
+    },
+    {
+      "name": "RDS Core Concepts",
+      "cards": [
+        {
+          "num": 23,
+          "front": "What is RDS?",
+          "back": "AWS-managed relational database.\nAWS handles OS patching, engine upgrades, backups, failover, hardware.\nYou handle schema, queries, parameter tuning, access control",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html"
+        },
+        {
+          "num": 24,
+          "front": "Supported RDS engines?",
+          "back": "PostgreSQL (port 5432), MySQL (3306), MariaDB (3306), Oracle (1521), SQL Server (1433), Db2.\nAurora is separate AWS-native product with same API",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html#Welcome.Concepts.DBInstance"
+        },
+        {
+          "num": 25,
+          "front": "RDS instance classes?",
+          "back": "db.t3.* \u2014 burstable, dev/test, free tier (micro)\ndb.t4g.* \u2014 ARM Graviton, cheaper\ndb.m6g.* \u2014 general purpose production\ndb.r6g.* \u2014 memory optimized, large datasets",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html"
+        },
+        {
+          "num": 26,
+          "front": "Storage types for RDS?",
+          "back": "gp2 \u2014 old SSD, free tier eligible. gp3 \u2014 new SSD, cheaper and faster baseline, use in production. io1/io2 \u2014 provisioned IOPS for high-performance workloads.\nAlways gp3 in prod",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html"
+        },
+        {
+          "num": 27,
+          "front": "What is Multi-AZ?",
+          "back": "Synchronous replication to standby in another AZ.\nAutomatic failover in 60-120 seconds.\nSame endpoint \u2014 app reconnects automatically.\nStandby is NOT readable.\nCosts 2x",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html"
+        },
+        {
+          "num": 28,
+          "front": "What is a Read Replica?",
+          "back": "Asynchronous replication to readable copy.\nSeparate endpoint.\nUp to 5 per primary.\nSame region or cross-region.\nCan be promoted to standalone.\nUsed for read offload and DR",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html"
+        },
+        {
+          "num": 29,
+          "front": "Multi-AZ vs Read Replica \u2014 key difference?",
+          "back": "Multi-AZ = HA (synchronous, auto-failover, NOT readable, same endpoint).\nRead Replica = performance/DR (async, readable, separate endpoint, manual failover via promote)",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html"
+        },
+        {
+          "num": 30,
+          "front": "Can you read from a Multi-AZ standby?",
+          "back": "No.\nThe standby is for failover only \u2014 not readable.\nTo offload reads, add a Read Replica.\nMulti-AZ standby becomes primary only during failover",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html"
+        },
+        {
+          "num": 31,
+          "front": "RDS free tier limits?",
+          "back": "db.t3.micro only.\n20GB gp2 storage.\n750 hours/month.\nSingle-AZ only (Multi-AZ not free).\nOne instance at a time.\nDestroy same day to avoid charges (~$14/month if forgotten)",
+          "link": "https://aws.amazon.com/rds/free/"
+        },
+        {
+          "num": 32,
+          "front": "Can you enable encryption after RDS creation?",
+          "back": "No \u2014 encryption cannot be enabled on an existing unencrypted instance.\nMust snapshot the instance, copy snapshot with encryption enabled, restore from encrypted snapshot",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html"
+        }
+      ]
+    },
+    {
+      "name": "RDS Terraform Resources",
+      "cards": [
+        {
+          "num": 33,
+          "front": "What is aws_db_subnet_group?",
+          "back": "Required for RDS \u2014 specifies which subnets RDS can use.\nMust include subnets in 2+ AZs for Multi-AZ.\nAlways use private subnets. resource \"aws_db_subnet_group\" { subnet_ids = var.subnet_ids }",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group"
+        },
+        {
+          "num": 34,
+          "front": "What is aws_db_parameter_group?",
+          "back": "Customizes database engine settings. family must match engine version exactly (postgres16, mysql8.0).\nUsed for audit logging: log_connections=1, log_disconnections=1, log_min_duration_statement=1000",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group"
+        },
+        {
+          "num": 35,
+          "front": "Parameter group family naming?",
+          "back": "postgres16 \u2192 PostgreSQL 16.x. postgres15 \u2192 PostgreSQL 15.x. mysql8.0 \u2192 MySQL 8.0.x. oracle-ee-19 \u2192 Oracle EE 19.x.\nMismatch causes apply error",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group#family"
+        },
+        {
+          "num": 36,
+          "front": "manage_master_user_password = true?",
+          "back": "AWS generates password, stores in Secrets Manager, auto-rotates.\nPassword NEVER appears in tfstate or env vars.\nGet ARN from: aws_db_instance.main.master_user_secret[0].secret_arn",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#manage_master_user_password"
+        },
+        {
+          "num": 37,
+          "front": "deletion_protection = true?",
+          "back": "Prevents terraform destroy on production database.\nMust set to false first, then apply, then destroy.\nAt a bank, losing the database is a catastrophic event \u2014 always true in prod",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#deletion_protection"
+        },
+        {
+          "num": 38,
+          "front": "publicly_accessible = false?",
+          "back": "Database is in private subnet only \u2014 no internet route.\nNever set to true in production.\nFor practice/testing only.\nCombined with security group restricting port 5432 to VPC CIDR",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#publicly_accessible"
+        },
+        {
+          "num": 39,
+          "front": "enabled_cloudwatch_logs_exports for PostgreSQL?",
+          "back": "[\"postgresql\", \"upgrade\"] \u2014 exports PostgreSQL logs and upgrade logs to CloudWatch.\nMySQL: [\"audit\", \"error\", \"general\", \"slowquery\"].\nRequired for compliance audit trail at banks",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#enabled_cloudwatch_logs_exports"
+        },
+        {
+          "num": 40,
+          "front": "backup_window vs maintenance_window?",
+          "back": "backup_window: \"03:00-04:00\" UTC \u2014 when automated backups run. maintenance_window: \"sun:04:00-sun:05:00\" \u2014 when patches apply.\nThey must NOT overlap or AWS rejects the config",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#backup_window"
+        },
+        {
+          "num": 41,
+          "front": "skip_final_snapshot and final_snapshot_identifier?",
+          "back": "skip_final_snapshot = false requires final_snapshot_identifier to be set or plan errors. skip_final_snapshot = true for dev (destroy freely).\nProduction: always false with identifier set",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#skip_final_snapshot"
+        },
+        {
+          "num": 42,
+          "front": "Same-region vs cross-region replica in Terraform?",
+          "back": "Same-region: replicate_source_db = aws_db_instance.main.identifier.\nCross-region: replicate_source_db = aws_db_instance.main.arn + provider = aws.dr alias.\nARN required for cross-region",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#replicate_source_db"
+        }
+      ]
+    },
+    {
+      "name": "RDS Security",
+      "cards": [
+        {
+          "num": 43,
+          "front": "Security group for RDS \u2014 best practice?",
+          "back": "Restrict port 5432 to app tier SG only (SG chaining), not VPC CIDR.\nPattern: ALB SG \u2192 App SG \u2192 RDS SG.\nEach layer only accepts from layer above.\nNever 0.0.0.0/0 on database port",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.RDSSecurityGroups.html"
+        },
+        {
+          "num": 44,
+          "front": "What is SG chaining?",
+          "back": "source_security_group_id = aws_security_group.app.id \u2014 RDS only accepts from app SG, not entire VPC CIDR.\nTighter than CIDR-based rules.\nProduction best practice at banks",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule#source_security_group_id"
+        },
+        {
+          "num": 45,
+          "front": "What is RDS IAM authentication?",
+          "back": "iam_database_authentication_enabled = true \u2014 app uses IAM token instead of password.\nToken generated by aws rds generate-db-auth-token, expires in 15 minutes.\nNo long-lived credentials",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html"
+        },
+        {
+          "num": 46,
+          "front": "IAM policy for RDS connect?",
+          "back": "Action: rds-db:connect.\nResource: arn:aws:rds-db:{region}:{account}:dbuser:{resource_id}/{username}.\nAttach to EKS node role or IRSA role.\nApp never stores a password",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html"
+        },
+        {
+          "num": 47,
+          "front": "What is IRSA?",
+          "back": "IAM Roles for Service Accounts \u2014 EKS pods assume IAM roles without storing credentials.\nPod SA annotated with IAM role ARN.\nOIDC federation exchanges projected token for STS credentials.\nNo access keys",
+          "link": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+        },
+        {
+          "num": 48,
+          "front": "storage_encrypted = true \u2014 what does it encrypt?",
+          "back": "Encrypts storage, automated backups, snapshots, and read replicas \u2014 all use AES-256 via KMS.\nCannot be enabled after creation.\nIn-transit: use sslmode=require in connection string",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html"
+        },
+        {
+          "num": 49,
+          "front": "How to handle RDS secrets in ECS?",
+          "back": "Use secrets block in task definition referencing Secrets Manager ARN \u2014 never environment variables.\nECS agent fetches secret at task start.\nRotation is automatic with manage_master_user_password",
+          "link": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html"
+        }
+      ]
+    },
+    {
+      "name": "VPC for RDS",
+      "cards": [
+        {
+          "num": 50,
+          "front": "What is a VPC?",
+          "back": "Virtual Private Cloud \u2014 isolated network in AWS.\nContains subnets, route tables, internet gateway, NAT gateway, security groups, NACLs.\nRDS must be deployed inside a VPC",
+          "link": "https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html"
+        },
+        {
+          "num": 51,
+          "front": "Public vs private subnet?",
+          "back": "Public subnet: route table has 0.0.0.0/0 \u2192 Internet Gateway.\nPrivate subnet: route table has 0.0.0.0/0 \u2192 NAT Gateway.\nRDS always in private subnet \u2014 no direct internet route",
+          "link": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html"
+        },
+        {
+          "num": 52,
+          "front": "Security groups vs NACLs?",
+          "back": "Security groups: stateful, instance-level, allow rules only.\nNACLs: stateless, subnet-level, allow and deny rules.\nSGs are the primary tool for RDS access control",
+          "link": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html"
+        },
+        {
+          "num": 53,
+          "front": "data \"aws_vpc\" usage?",
+          "back": "data \"aws_vpc\" \"main\" { id = var.vpc_id } \u2014 reads existing VPC.\nAccess CIDR with data.aws_vpc.main.cidr_block.\nUse in SG ingress to restrict RDS to VPC CIDR only",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc"
+        },
+        {
+          "num": 54,
+          "front": "What is VPC Transit Gateway?",
+          "back": "AWS-native regional router connecting VPCs, VPNs, Direct Connect without EC2 routing.\nReplaces Transit VPC (old EC2-based hub).\nScales to thousands of VPCs.\nUsed at Fed to connect AWS to on-prem",
+          "link": "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html"
+        },
+        {
+          "num": 55,
+          "front": "Transit Gateway vs Transit VPC?",
+          "back": "Transit VPC: old pattern, EC2-based VPN appliances, complex, expensive, single point of failure.\nTransit Gateway: AWS-native, no EC2, scales to 1000s of VPCs, route tables for segmentation",
+          "link": "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html"
+        },
+        {
+          "num": 56,
+          "front": "What is AWS Direct Connect?",
+          "back": "Dedicated private network connection from on-prem to AWS \u2014 not over internet.\nConsistent bandwidth, lower latency.\nUsed at Fed for DMS migration traffic, DB replication, ongoing hybrid connectivity",
+          "link": "https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html"
+        },
+        {
+          "num": 57,
+          "front": "What is VPC peering?",
+          "back": "Direct network connection between two VPCs \u2014 traffic stays on AWS backbone.\nNot transitive (A\u2194B, B\u2194C does not mean A\u2194C).\nUsed for MongoDB Atlas and cross-account RDS access",
+          "link": "https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html"
+        },
+        {
+          "num": 58,
+          "front": "What is AWS PrivateLink?",
+          "back": "Private endpoint for AWS services or third-party services \u2014 traffic never leaves AWS network.\nUsed for MongoDB Atlas (preferred over VPC peering at banks).\nAlso for RDS Proxy, Secrets Manager",
+          "link": "https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html"
+        }
+      ]
+    },
+    {
+      "name": "Database Migration",
+      "cards": [
+        {
+          "num": 59,
+          "front": "What is AWS DMS?",
+          "back": "Database Migration Service \u2014 migrates databases to AWS.\nSupports Oracle, SQL Server, MySQL, PostgreSQL as source.\nThree phases: schema conversion, full load, CDC (ongoing replication)",
+          "link": "https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html"
+        },
+        {
+          "num": 60,
+          "front": "3 phases of DMS migration?",
+          "back": "1.\nSchema conversion: AWS SCT converts DDL (Oracle \u2192 PostgreSQL).\n2.\nFull load: DMS copies all existing data to RDS target.\n3.\nCDC: DMS streams ongoing changes via LogMiner until cutover",
+          "link": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_BestPractices.html"
+        },
+        {
+          "num": 61,
+          "front": "What is AWS SCT?",
+          "back": "Schema Conversion Tool \u2014 converts Oracle/SQL Server DDL to PostgreSQL/MySQL syntax.\nFlags incompatible objects (stored procedures, functions) that need manual rewrite.\nRun before DMS",
+          "link": "https://docs.aws.amazon.com/SchemaConversionTool/latest/userguide/CHAP_Welcome.html"
+        },
+        {
+          "num": 62,
+          "front": "What is CDC in DMS?",
+          "back": "Change Data Capture \u2014 streams ongoing database changes after full load completes.\nUses Oracle LogMiner or SQL Server transaction log.\nKeeps target in sync until cutover maintenance window",
+          "link": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html"
+        },
+        {
+          "num": 63,
+          "front": "aws_dms_replication_instance vs aws_db_instance?",
+          "back": "Completely different resources. aws_dms_replication_instance is the DMS engine that runs migration tasks. aws_db_instance is the RDS target database.\nBoth needed for migration infrastructure",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dms_replication_instance"
+        },
+        {
+          "num": 64,
+          "front": "IAM role for DMS \u2014 what service?",
+          "back": "Principal Service = dms.amazonaws.com \u2014 NOT ec2.amazonaws.com.\nCommon mistake under pressure.\nDMS role needs SecretsManagerReadWrite to access source/target credentials",
+          "link": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html"
+        },
+        {
+          "num": 65,
+          "front": "What is aws_dms_replication_subnet_group?",
+          "back": "Separate from aws_db_subnet_group \u2014 DMS needs its own subnet group.\nSpecifies which subnets the DMS replication instance runs in.\nRequired before creating replication instance",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dms_replication_subnet_group"
+        }
+      ]
+    },
+    {
+      "name": "RDS Backups and HA",
+      "cards": [
+        {
+          "num": 66,
+          "front": "Automated backups in RDS?",
+          "back": "backup_retention_period = 0-35 days (0 = disabled).\nPoint-in-time recovery to any second within window.\nStored in S3 (invisible to you). backup_window sets when they run (UTC)",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html"
+        },
+        {
+          "num": 67,
+          "front": "Manual snapshots vs automated backups?",
+          "back": "Automated: retained for backup_retention_period days, then deleted.\nManual: retained until you delete them. final_snapshot_identifier creates a manual snapshot on destroy",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html"
+        },
+        {
+          "num": 68,
+          "front": "RDS Multi-AZ failover time?",
+          "back": "60-120 seconds \u2014 RDS promotes standby to primary, updates DNS endpoint.\nApplication must handle reconnection.\nConnection pooling (RDS Proxy) reduces reconnection impact",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html"
+        },
+        {
+          "num": 69,
+          "front": "What is RDS Proxy?",
+          "back": "Managed connection pooler for RDS \u2014 reduces connection overhead, handles failover transparently, integrates with Secrets Manager and IAM auth.\nUseful for Lambda and ECS with many short-lived connections",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html"
+        },
+        {
+          "num": 70,
+          "front": "What is RDS Aurora vs RDS PostgreSQL?",
+          "back": "Aurora: AWS-optimized, distributed storage auto-grows, up to 15 replicas, failover <30 sec, ~20% more expensive.\nRDS PostgreSQL: standard engine, EBS storage, 5 replicas, failover 60-120 sec, lower cost",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.AuroraPostgreSQL.html"
+        },
+        {
+          "num": 71,
+          "front": "Key CloudWatch metrics for RDS?",
+          "back": "DatabaseConnections \u2014 pool exhaustion\nFreeStorageSpace \u2014 disk full = outage\nReadLatency / WriteLatency \u2014 query performance\nReplicaLag \u2014 replica falling behind\nCPUUtilization\nFreeableMemory\nBurstBalance \u2014 t3 credit exhaustion",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+        }
+      ]
+    },
+    {
+      "name": "Managed Database Services",
+      "cards": [
+        {
+          "num": 72,
+          "front": "What is MongoDB Atlas on AWS?",
+          "back": "MongoDB's managed cloud service.\nDeploys into Atlas-managed VPCs, connected to your VPC via VPC peering or AWS PrivateLink.\nPrivateLink preferred at banks \u2014 traffic stays on AWS backbone.\nTerraform Atlas provider",
+          "link": "https://www.mongodb.com/docs/atlas/"
+        },
+        {
+          "num": 73,
+          "front": "What is Databricks on AWS?",
+          "back": "Unified analytics platform on Apache Spark.\nControl plane managed by Databricks, data plane runs in your VPC.\nConnects to S3 for data lake, RDS for structured data.\nIAM roles for auth.\nTerraform Databricks provider",
+          "link": "https://docs.databricks.com/en/getting-started/index.html"
+        },
+        {
+          "num": 74,
+          "front": "What is Amazon DynamoDB?",
+          "back": "AWS-native NoSQL key-value and document database.\nServerless, auto-scales, single-digit millisecond latency.\nNo schema.\nUsed for session state, IoT, gaming.\nNot RDS \u2014 separate service",
+          "link": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html"
+        },
+        {
+          "num": 75,
+          "front": "What is Amazon OpenSearch?",
+          "back": "Managed Elasticsearch/OpenSearch service.\nUsed for log analytics, full-text search, SIEM data.\nDeployed in VPC.\nUsed at VA.gov for search tier and at Mosaic451 for threat analytics",
+          "link": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html"
+        },
+        {
+          "num": 76,
+          "front": "RDS vs DynamoDB \u2014 when to use which?",
+          "back": "RDS: structured data, complex queries, joins, ACID transactions, existing SQL workloads.\nDynamoDB: simple key-value lookups, massive scale, serverless, flexible schema, single-digit ms latency",
+          "link": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SQLtoNoSQL.html"
+        },
+        {
+          "num": 77,
+          "front": "What is Amazon ElastiCache?",
+          "back": "Managed in-memory cache \u2014 Redis or Memcached.\nUsed to reduce RDS load by caching frequent queries.\nRedis supports persistence, pub/sub, sorted sets.\nDeployed in VPC, same subnet group pattern as RDS",
+          "link": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/WhatIs.html"
+        }
+      ]
+    },
+    {
+      "name": "Containerization + Database",
+      "cards": [
+        {
+          "num": 78,
+          "front": "How do EKS pods connect to RDS?",
+          "back": "Three options: 1.\nSecrets Manager (fetch at startup).\n2.\nIAM auth via IRSA (token, no password).\n3.\nRDS Proxy (connection pooling + IAM).\nIRSA is the most secure \u2014 no credentials stored anywhere",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Connecting.html"
+        },
+        {
+          "num": 79,
+          "front": "How to containerize a COTS tool?",
+          "back": "1.\nVendor base image or minimal OS.\n2.\nInstall COTS in Dockerfile.\n3.\nExternalize config via env vars or ConfigMaps.\n4.\nExternalize state to PV, RDS, or S3.\n5.\nHealth check endpoint.\n6.\nRun as non-root",
+          "link": "https://docs.docker.com/build/building/best-practices/"
+        },
+        {
+          "num": 80,
+          "front": "What is rehydration in AWS context?",
+          "back": "Rebuilding infrastructure from scratch in a new region or account using IaC.\nTerraform code IS the recovery plan \u2014 point backend to new region, run apply.\nGitLab CI/CD automates one-click rehydration",
+          "link": "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-readiness/understanding-6rs.html"
+        },
+        {
+          "num": 81,
+          "front": "ECS execution role vs task role?",
+          "back": "Execution role: ECS agent uses it to pull ECR images and write CloudWatch logs.\nTask role: running container assumes it for app-level access (RDS IAM auth, S3, Secrets Manager).\nAlways split them \u2014 least privilege",
+          "link": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html"
+        },
+        {
+          "num": 82,
+          "front": "How to pass RDS credentials to ECS task?",
+          "back": "Use secrets block in task definition: { name = \"DB_PASSWORD\", valueFrom = \"<secrets-manager-arn>\" }.\nECS agent fetches at task start.\nNever use environment block for secrets \u2014 visible in console and logs",
+          "link": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html"
+        }
+      ]
+    },
+    {
+      "name": "Common Mistakes",
+      "cards": [
+        {
+          "num": 83,
+          "front": "locals.name vs local.name?",
+          "back": "local.name is CORRECT \u2014 singular. locals.name will error: \"An argument named locals is not expected here\".\nThis is the most common mistake under interview pressure",
+          "link": "https://developer.hashicorp.com/terraform/language/values/locals"
+        },
+        {
+          "num": 84,
+          "front": "Same-region vs cross-region replica source?",
+          "back": "Same-region: replicate_source_db = aws_db_instance.main.identifier (just the name).\nCross-region: replicate_source_db = aws_db_instance.main.arn (full ARN).\nUsing identifier for cross-region will error",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#replicate_source_db"
+        },
+        {
+          "num": 85,
+          "front": "skip_final_snapshot = false without identifier?",
+          "back": "Plan error: \"final_snapshot_identifier is required when skip_final_snapshot is false\".\nAlways pair: skip_final_snapshot = false + final_snapshot_identifier = \"mydb-final-snapshot\"",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#skip_final_snapshot"
+        },
+        {
+          "num": 86,
+          "front": "Subnet group with 1 AZ + multi_az = true?",
+          "back": "Apply error \u2014 Multi-AZ requires subnets in at least 2 different AZs in the subnet group.\nAlways pass 2+ subnet IDs from different AZs in var.subnet_ids",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html"
+        },
+        {
+          "num": 87,
+          "front": "DMS IAM role wrong principal?",
+          "back": "Principal Service must be dms.amazonaws.com \u2014 NOT ec2.amazonaws.com.\nCommon mistake: copy-pasting EC2 role template.\nDMS cannot assume a role with wrong principal",
+          "link": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.html"
+        },
+        {
+          "num": 88,
+          "front": "Parameter group family mismatch?",
+          "back": "family = \"postgres16\" must match engine_version = \"16.x\".\nUsing postgres15 family with engine 16.3 causes apply error.\nCheck family naming: postgres16, mysql8.0, oracle-ee-19",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group#family"
+        },
+        {
+          "num": 89,
+          "front": "backup_window overlaps maintenance_window?",
+          "back": "AWS rejects the configuration \u2014 windows must not overlap.\nbackup_window = \"03:00-04:00\"\nmaintenance_window = \"sun:04:00-sun:05:00\"\nBack-to-back is correct, not overlapping",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#backup_window"
+        },
+        {
+          "num": 90,
+          "front": "gp3 on free tier?",
+          "back": "Free tier only supports gp2 \u2014 gp3 incurs charges.\nFor practice: storage_type = \"gp2\".\nFor interview answers: storage_type = \"gp3\".\nRemember to switch when writing production code",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html"
+        }
+      ]
+    },
+    {
+      "name": "CoderPad Tips",
+      "cards": [
+        {
+          "num": 91,
+          "front": "First thing to do in CoderPad?",
+          "back": "Read the prompt fully before typing.\nIdentify: existing VPC or new? Which engine? What extensions (replica, multi-AZ, DMS)? Outline in comments first \u2014 shows structured thinking",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands"
+        },
+        {
+          "num": 92,
+          "front": "CoderPad command sequence?",
+          "back": "terraform fmt \u2192 terraform init -upgrade \u2192 terraform validate \u2192 terraform plan -var=\"...\" \u2192 terraform apply.\nAlways -upgrade on init \u2014 CoderPad caches stale providers. fmt first shows discipline",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands"
+        },
+        {
+          "num": 93,
+          "front": "Why terraform init -upgrade in CoderPad?",
+          "back": "CoderPad caches provider plugins between sessions.\nStale cache causes init to fail or use wrong provider version. -upgrade forces download of latest allowed version.\nLearned this the hard way",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/init"
+        },
+        {
+          "num": 94,
+          "front": "How to verify locals without apply in CoderPad?",
+          "back": "Add output block with all local values, run terraform plan -var=\"environment=prod\".\nOutputs appear in plan output \u2014 interviewer can verify conditional logic without waiting for apply",
+          "link": "https://developer.hashicorp.com/terraform/language/values/outputs"
+        },
+        {
+          "num": 95,
+          "front": "What to say while typing in CoderPad?",
+          "back": "Explain WHY not just WHAT.\n'I'm using manage_master_user_password because passwords should never appear in tfstate \u2014 at a bank this is non-negotiable.'\nSilence = uncertainty in interviewer's mind",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance#manage_master_user_password"
+        },
+        {
+          "num": 96,
+          "front": "Interviewer shares a code fragment \u2014 what to do?",
+          "back": "Read it fully before touching it.\nIdentify what's missing.\nAdd locals first if not present, then data sources, then resources, then outputs.\nDon't delete their code \u2014 extend it",
+          "link": "https://developer.hashicorp.com/terraform/language/syntax/configuration"
+        },
+        {
+          "num": 97,
+          "front": "Security callouts to make unprompted?",
+          "back": "storage_encrypted=true (at-rest, mandatory at banks). manage_master_user_password (Secrets Manager, never tfstate). publicly_accessible=false (never on internet). deletion_protection=true (no accidental destroy).\nSay these out loud",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html"
+        },
+        {
+          "num": 98,
+          "front": "What if you forget a required argument?",
+          "back": "terraform validate will catch it immediately \u2014 run it before plan.\nCommon forgotten args: final_snapshot_identifier (when skip_final_snapshot=false), subnet_ids (db_subnet_group), family (parameter_group)",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/validate"
+        },
+        {
+          "num": 99,
+          "front": "How to handle 'extend this to multi-region'?",
+          "back": "Add provider alias block first: provider \"aws\" { alias=\"dr\"; region=\"us-west-2\" }.\nThen add cross-region replica resource with provider=aws.dr and replicate_source_db = main ARN (not identifier)",
+          "link": "https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations"
+        },
+        {
+          "num": 100,
+          "front": "What to say when done coding?",
+          "back": "'I'd also add in production:\n- ALB in front\n- CloudWatch alarms for FreeStorageSpace and ReplicaLag\n- RDS Proxy for connection pooling\n- Tighten SG from VPC CIDR to app tier SG only'\nShows production thinking",
+          "link": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/monitoring-cloudwatch.html"
+        },
+        {
+          "num": 101,
+          "front": "How to handle a locals block the interviewer wrote?",
+          "back": "Reference their locals exactly as written \u2014 local.their_variable_name.\nAdd your own locals in the same block or a second locals block.\nNever redefine a local they already defined \u2014 Terraform errors on duplicate",
+          "link": "https://developer.hashicorp.com/terraform/language/values/locals"
+        },
+        {
+          "num": 102,
+          "front": "What if CoderPad has no AWS credentials?",
+          "back": "terraform plan still works \u2014 it validates config and shows what would be created. terraform apply will fail on auth.\nFocus on plan output \u2014 that's what the interviewer is evaluating, not actual AWS resources",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands/plan"
+        },
+        {
+          "num": 103,
+          "front": "Time management in 60-minute CoderPad?",
+          "back": "0-5 min: read prompt, outline in comments.\n5-25 min: write core resource (RDS + subnet group + SG).\n25-40 min: add locals, outputs, backend.\n40-50 min: validate + plan.\n50-60 min: discuss production improvements",
+          "link": "https://developer.hashicorp.com/terraform/cli/commands"
+        },
+        {
+          "num": 104,
+          "front": "What if you blank on a resource argument name?",
+          "back": "Say 'I'd look up the exact argument name in the Terraform docs \u2014 the pattern is clear.' Then write a comment: # manage_master_user_password or similar.\nInterviewers care about patterns, not memorized argument names",
+          "link": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance"
+        },
+        {
+          "num": 105,
+          "front": "How to show enterprise thinking in CoderPad?",
+          "back": "Start with S3 backend (not local state).\nUse variables for vpc_id and subnet_ids (not hardcoded).\nUse locals for environment-specific values.\nAdd common_tags to every resource.\nThese 4 things signal senior engineer",
+          "link": "https://developer.hashicorp.com/terraform/language/backend/s3"
+        }
+      ]
+    }
+  ]
+}

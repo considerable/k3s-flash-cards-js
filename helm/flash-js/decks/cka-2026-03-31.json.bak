@@ -1,0 +1,180 @@
+{
+  "name": "CKA (2026-03-31)",
+  "sections": [
+    {
+      "name": "Core Concepts",
+      "cards": [
+        { "num": 1, "front": "What is a Pod?", "back": "Smallest deployable unit — one or more containers sharing network namespace and storage volumes" },
+        { "num": 2, "front": "What is a Deployment?", "back": "Manages ReplicaSets, provides declarative updates, rolling updates, and rollbacks for Pods" },
+        { "num": 3, "front": "What is a ReplicaSet?", "back": "Ensures a specified number of identical Pod replicas are running at all times" },
+        { "num": 4, "front": "What is a Namespace?", "back": "Virtual cluster for resource isolation, RBAC scoping, and resource quotas within a cluster" },
+        { "num": 5, "front": "What is a StatefulSet?", "back": "Manages stateful apps with stable network identities, ordered deployment, and persistent storage per Pod" },
+        { "num": 6, "front": "What is a DaemonSet?", "back": "Ensures a Pod runs on every (or selected) node — used for logging agents, monitoring, CNI plugins" },
+        { "num": 7, "front": "What is a Job?", "back": "Creates one or more Pods that run to completion — used for batch processing" },
+        { "num": 8, "front": "What is a CronJob?", "back": "Runs Jobs on a cron schedule — e.g. backups, report generation" },
+        { "num": 9, "front": "What is a ConfigMap?", "back": "Stores non-confidential config as key-value pairs — mounted as env vars or volumes" },
+        { "num": 10, "front": "What is a Secret?", "back": "Stores sensitive data (passwords, tokens, TLS certs) — base64-encoded, can be encrypted at rest" },
+        { "num": 11, "front": "What is a label?", "back": "Key-value pair on objects used for selection and grouping — e.g. app=web, env=prod" },
+        { "num": 12, "front": "What is an annotation?", "back": "Key-value metadata on objects for non-identifying info — build version, tool config, descriptions" },
+        { "num": 13, "front": "Declarative vs imperative in K8s?", "back": "Declarative: kubectl apply -f (desired state). Imperative: kubectl create/run (direct commands). Declarative is preferred" },
+        { "num": 14, "front": "What is a selector?", "back": "Label query that matches objects — used by Services, Deployments, and ReplicaSets to find their Pods" }
+      ]
+    },
+    {
+      "name": "Cluster Architecture",
+      "cards": [
+        { "num": 15, "front": "What is the control plane?", "back": "API server, etcd, scheduler, controller manager — manages cluster state and scheduling decisions" },
+        { "num": 16, "front": "What is etcd?", "back": "Distributed key-value store that holds all cluster state — the single source of truth for K8s" },
+        { "num": 17, "front": "How to backup etcd?", "back": "ETCDCTL_API=3 etcdctl snapshot save backup.db --endpoints --cacert --cert --key" },
+        { "num": 18, "front": "How to restore etcd?", "back": "etcdctl snapshot restore backup.db --data-dir=/var/lib/etcd-restored, then update etcd Pod manifest to use new data-dir" },
+        { "num": 19, "front": "What is the kube-scheduler?", "back": "Assigns Pods to nodes based on resource requirements, affinity, taints, and constraints" },
+        { "num": 20, "front": "What is the kube-controller-manager?", "back": "Runs controllers (Deployment, ReplicaSet, Node, Job) that reconcile desired vs actual state" },
+        { "num": 21, "front": "What is kubelet?", "back": "Agent on each node that ensures containers are running in Pods as specified by PodSpecs" },
+        { "num": 22, "front": "What is kube-proxy?", "back": "Network proxy on each node that maintains iptables/IPVS rules for Service routing" },
+        { "num": 23, "front": "What is kubectl?", "back": "CLI tool to interact with the K8s API server — create, inspect, update, delete resources" },
+        { "num": 24, "front": "What is a container runtime?", "back": "Software that runs containers — containerd (default), CRI-O. Docker was removed in K8s 1.24" },
+        { "num": 25, "front": "What is kubeadm?", "back": "Tool to bootstrap K8s clusters — kubeadm init (control plane), kubeadm join (worker nodes)" },
+        { "num": 26, "front": "How to upgrade a cluster with kubeadm?", "back": "Upgrade kubeadm, run kubeadm upgrade plan, kubeadm upgrade apply on control plane, then drain and upgrade each node" },
+        { "num": 27, "front": "What is a static Pod?", "back": "Pod managed directly by kubelet (not API server) — defined in /etc/kubernetes/manifests/. Used for control plane components" },
+        { "num": 28, "front": "Where are K8s certificates stored?", "back": "/etc/kubernetes/pki/ — CA, API server, kubelet, etcd certs. Managed by kubeadm, expire after 1 year by default" },
+        { "num": 29, "front": "How to renew K8s certificates?", "back": "kubeadm certs renew all — renews all certificates. Check expiry with kubeadm certs check-expiration" }
+      ]
+    },
+    {
+      "name": "Networking",
+      "cards": [
+        { "num": 30, "front": "What is a Service?", "back": "Stable network endpoint (virtual IP) that load-balances traffic to a set of Pods matched by selector" },
+        { "num": 31, "front": "ClusterIP Service?", "back": "Default type — internal-only virtual IP reachable within the cluster" },
+        { "num": 32, "front": "NodePort Service?", "back": "Exposes Service on a static port (30000-32767) on every node's IP" },
+        { "num": 33, "front": "LoadBalancer Service?", "back": "Provisions an external load balancer that routes to NodePorts" },
+        { "num": 34, "front": "What is an Ingress?", "back": "HTTP/HTTPS routing rules — host/path-based routing to Services. Requires an Ingress Controller" },
+        { "num": 35, "front": "What is an Ingress Controller?", "back": "Pod that implements Ingress rules — e.g. Nginx, Traefik, HAProxy" },
+        { "num": 36, "front": "What is a CNI plugin?", "back": "Container Network Interface — provides Pod networking. Examples: Calico, Flannel, Cilium, Weave" },
+        { "num": 37, "front": "What is a NetworkPolicy?", "back": "Firewall rules for Pods — controls ingress/egress traffic by label, namespace, or CIDR" },
+        { "num": 38, "front": "What is CoreDNS?", "back": "Cluster DNS server — resolves Service names to ClusterIPs (e.g. my-svc.my-ns.svc.cluster.local)" },
+        { "num": 39, "front": "What is a headless Service?", "back": "Service with clusterIP: None — returns Pod IPs directly via DNS, used with StatefulSets" },
+        { "num": 40, "front": "Pod-to-Pod networking model?", "back": "Every Pod gets its own IP. All Pods can communicate without NAT. Flat network enforced by CNI" },
+        { "num": 41, "front": "What is externalTrafficPolicy: Local?", "back": "Preserves client source IP by routing only to Pods on the receiving node — avoids extra hop" },
+        { "num": 42, "front": "What is a Gateway API?", "back": "Next-gen replacement for Ingress — more expressive routing with Gateway, HTTPRoute, GRPCRoute resources" },
+        { "num": 43, "front": "K8s DNS record format?", "back": "<service>.<namespace>.svc.cluster.local — Pods: <pod-ip-dashed>.<namespace>.pod.cluster.local" }
+      ]
+    },
+    {
+      "name": "Storage",
+      "cards": [
+        { "num": 44, "front": "What is a PersistentVolume (PV)?", "back": "Cluster-level storage resource — provisioned statically by admin or dynamically via StorageClass" },
+        { "num": 45, "front": "What is a PersistentVolumeClaim (PVC)?", "back": "Request for storage by a Pod — binds to a PV that satisfies size and access mode requirements" },
+        { "num": 46, "front": "What is a StorageClass?", "back": "Defines how PVs are dynamically provisioned — specifies provisioner, parameters, reclaim policy" },
+        { "num": 47, "front": "Access modes for PV?", "back": "ReadWriteOnce (single node), ReadOnlyMany (many nodes read), ReadWriteMany (many nodes read/write)" },
+        { "num": 48, "front": "Reclaim policies?", "back": "Retain (keep PV after PVC deleted), Delete (remove PV and backing storage), Recycle (deprecated)" },
+        { "num": 49, "front": "emptyDir volume?", "back": "Temporary volume created with the Pod, deleted when Pod is removed — useful for scratch space or sharing between containers" },
+        { "num": 50, "front": "hostPath volume?", "back": "Mounts a file or directory from the host node — use only for single-node testing, not production" },
+        { "num": 51, "front": "What is a volumeMount?", "back": "Specifies where a volume is mounted inside a container — path, readOnly, subPath" },
+        { "num": 52, "front": "How to expand a PVC?", "back": "Edit PVC spec.resources.requests.storage — StorageClass must have allowVolumeExpansion: true" }
+      ]
+    },
+    {
+      "name": "Security",
+      "cards": [
+        { "num": 53, "front": "What is RBAC?", "back": "Role-Based Access Control — Role/ClusterRole define permissions, RoleBinding/ClusterRoleBinding assign them to users/groups/SAs" },
+        { "num": 54, "front": "Role vs ClusterRole?", "back": "Role is namespace-scoped. ClusterRole is cluster-wide — also used for non-namespaced resources (nodes, PVs)" },
+        { "num": 55, "front": "What is a ServiceAccount?", "back": "Identity for Pods to authenticate with the API server — each namespace has a default SA" },
+        { "num": 56, "front": "What is a SecurityContext?", "back": "Pod/container-level security settings — runAsNonRoot, readOnlyRootFilesystem, capabilities, seccomp" },
+        { "num": 57, "front": "What is Pod Security Admission?", "back": "Built-in admission controller (replaced PodSecurityPolicy) — enforces Privileged, Baseline, or Restricted profiles per namespace" },
+        { "num": 58, "front": "What is OPA/Gatekeeper?", "back": "Policy engine for K8s — enforces custom policies (e.g. no latest tag, require labels) via admission webhooks" },
+        { "num": 59, "front": "What is an admission webhook?", "back": "Intercepts API requests before persistence — Validating (reject bad requests) or Mutating (modify requests)" },
+        { "num": 60, "front": "What are dropped capabilities?", "back": "Linux capabilities removed from container — drop ALL then add only what's needed (e.g. NET_BIND_SERVICE)" },
+        { "num": 61, "front": "What is seccomp?", "back": "Restricts syscalls a container can make — RuntimeDefault profile blocks dangerous syscalls" },
+        { "num": 62, "front": "automountServiceAccountToken: false?", "back": "Prevents auto-mounting the SA token in Pods — reduces attack surface if Pod doesn't need API access" },
+        { "num": 63, "front": "How to create a TLS Secret?", "back": "kubectl create secret tls my-tls --cert=cert.pem --key=key.pem" },
+        { "num": 64, "front": "How to check RBAC permissions?", "back": "kubectl auth can-i <verb> <resource> --as=<user> --namespace=<ns>. Use --list to see all permissions" }
+      ]
+    },
+    {
+      "name": "Scaling & Scheduling",
+      "cards": [
+        { "num": 65, "front": "What is HPA?", "back": "Horizontal Pod Autoscaler — scales Pod replicas based on CPU, memory, or custom metrics" },
+        { "num": 66, "front": "What is VPA?", "back": "Vertical Pod Autoscaler — adjusts Pod CPU/memory requests based on actual usage. Can conflict with HPA" },
+        { "num": 67, "front": "What are resource requests?", "back": "Minimum CPU/memory guaranteed to a container — used by scheduler for placement decisions" },
+        { "num": 68, "front": "What are resource limits?", "back": "Maximum CPU/memory a container can use — CPU is throttled, memory over-limit causes OOMKill" },
+        { "num": 69, "front": "QoS classes?", "back": "Guaranteed (requests=limits), Burstable (requests<limits), BestEffort (no requests/limits). Eviction order: BestEffort first" },
+        { "num": 70, "front": "What are taints and tolerations?", "back": "Taints repel Pods from nodes. Tolerations on Pods allow scheduling on tainted nodes. Used for dedicated/GPU nodes" },
+        { "num": 71, "front": "What is node affinity?", "back": "Rules that constrain which nodes a Pod can schedule on — based on node labels (required or preferred)" },
+        { "num": 72, "front": "What is Pod affinity/anti-affinity?", "back": "Schedule Pods together (affinity) or apart (anti-affinity) based on labels — e.g. spread across AZs" },
+        { "num": 73, "front": "What is a PodDisruptionBudget?", "back": "Limits voluntary disruptions — ensures minAvailable or maxUnavailable Pods during drains, upgrades, scaling" },
+        { "num": 74, "front": "What is topology spread?", "back": "topologySpreadConstraints distribute Pods evenly across zones, nodes, or other topology domains" },
+        { "num": 75, "front": "What is a LimitRange?", "back": "Sets default and max resource requests/limits per container in a namespace" },
+        { "num": 76, "front": "What is a ResourceQuota?", "back": "Limits total resource consumption (CPU, memory, object count) per namespace" },
+        { "num": 77, "front": "How to drain a node?", "back": "kubectl drain <node> --ignore-daemonsets --delete-emptydir-data — evicts Pods respecting PDBs, then cordon" },
+        { "num": 78, "front": "kubectl cordon vs drain?", "back": "Cordon marks node unschedulable (existing Pods stay). Drain cordons AND evicts all Pods" }
+      ]
+    },
+    {
+      "name": "Observability",
+      "cards": [
+        { "num": 79, "front": "What are liveness probes?", "back": "Checks if container is alive — restarts container on failure. HTTP GET, TCP socket, or exec command" },
+        { "num": 80, "front": "What are readiness probes?", "back": "Checks if container can serve traffic — removes Pod from Service endpoints on failure" },
+        { "num": 81, "front": "What are startup probes?", "back": "Checks if container has started — disables liveness/readiness until success. For slow-starting apps" },
+        { "num": 82, "front": "kubectl logs vs kubectl describe?", "back": "logs: container stdout/stderr. describe: events, conditions, resource details — use describe for scheduling/startup issues" },
+        { "num": 83, "front": "What is metrics-server?", "back": "Cluster add-on that collects resource metrics from kubelets — required for HPA and kubectl top" },
+        { "num": 84, "front": "How to get container logs from a crashed Pod?", "back": "kubectl logs <pod> --previous — shows logs from the previous container instance" },
+        { "num": 85, "front": "How to monitor cluster events?", "back": "kubectl get events --sort-by=.lastTimestamp or kubectl get events -w for live watch" }
+      ]
+    },
+    {
+      "name": "Troubleshooting",
+      "cards": [
+        { "num": 86, "front": "Pod stuck in Pending?", "back": "Insufficient resources, no matching nodes (taints/affinity), PVC not bound, or ResourceQuota exceeded. Check kubectl describe pod" },
+        { "num": 87, "front": "Pod in CrashLoopBackOff?", "back": "Container starts and crashes repeatedly — check kubectl logs. Common: wrong command, missing config, OOMKilled, failing health check" },
+        { "num": 88, "front": "Pod in ImagePullBackOff?", "back": "Can't pull container image — wrong image name/tag, missing registry credentials, or network issue" },
+        { "num": 89, "front": "Service not routing traffic?", "back": "Check selector matches Pod labels, Pod is Ready, endpoints exist (kubectl get endpoints). Check NetworkPolicy" },
+        { "num": 90, "front": "Node NotReady?", "back": "kubelet not running, resource pressure (disk/memory/PID), or network issues. Check kubectl describe node and kubelet logs" },
+        { "num": 91, "front": "OOMKilled?", "back": "Container exceeded memory limit — increase limits, fix memory leak, or tune JVM/runtime heap settings" },
+        { "num": 92, "front": "exec format error?", "back": "Image architecture mismatch — e.g. arm64 image on amd64 node. Build with --platform linux/amd64" },
+        { "num": 93, "front": "How to debug a running Pod?", "back": "kubectl exec -it pod -- sh. Or kubectl debug for ephemeral containers on distroless images" },
+        { "num": 94, "front": "How to check Pod resource usage?", "back": "kubectl top pod (requires metrics-server). For historical data use Prometheus" },
+        { "num": 95, "front": "kubelet not starting?", "back": "Check systemctl status kubelet, journalctl -u kubelet. Common: wrong container runtime, cert issues, swap enabled" },
+        { "num": 96, "front": "How to check component health?", "back": "kubectl get componentstatuses (deprecated) or kubectl get --raw /healthz. Check individual: /healthz/etcd, /healthz/poststarthook" }
+      ]
+    },
+    {
+      "name": "kubectl Skills",
+      "cards": [
+        { "num": 97, "front": "kubectl get with jsonpath?", "back": "kubectl get pod -o jsonpath='{.items[*].metadata.name}' — extract specific fields from JSON output" },
+        { "num": 98, "front": "kubectl get with custom-columns?", "back": "kubectl get pods -o custom-columns=NAME:.metadata.name,IP:.status.podIP — tabular custom output" },
+        { "num": 99, "front": "How to sort kubectl output?", "back": "kubectl get pods --sort-by=.metadata.creationTimestamp or --sort-by=.status.startTime" },
+        { "num": 100, "front": "kubectl run for quick Pod?", "back": "kubectl run test --image=busybox --rm -it --restart=Never -- sh — disposable debug Pod" },
+        { "num": 101, "front": "kubectl create vs apply?", "back": "create: imperative, fails if exists. apply: declarative, creates or updates. apply tracks last-applied-configuration" },
+        { "num": 102, "front": "How to generate YAML without creating?", "back": "kubectl run/create/expose --dry-run=client -o yaml > file.yaml — generates manifest without applying" },
+        { "num": 103, "front": "kubectl explain?", "back": "kubectl explain pod.spec.containers — shows API docs for any resource field. Add --recursive for full tree" },
+        { "num": 104, "front": "How to edit a live resource?", "back": "kubectl edit deployment/my-app — opens in $EDITOR, applies on save. Or kubectl patch for scripted changes" }
+      ]
+    },
+    {
+      "name": "Helm & GitOps",
+      "cards": [
+        { "num": 105, "front": "What is Helm?", "back": "Package manager for K8s — charts are templated YAML bundles. Install, upgrade, rollback releases" },
+        { "num": 106, "front": "Helm chart structure?", "back": "Chart.yaml (metadata), values.yaml (defaults), templates/ (K8s manifests with Go templating)" },
+        { "num": 107, "front": "helm upgrade --install?", "back": "Idempotent deploy — installs if release doesn't exist, upgrades if it does" },
+        { "num": 108, "front": "What is ArgoCD?", "back": "GitOps controller — watches a Git repo and syncs K8s cluster state to match. Declarative, auditable deployments" },
+        { "num": 109, "front": "What is Flux?", "back": "GitOps toolkit by CNCF — reconciles cluster state from Git. Supports Helm, Kustomize, plain YAML" },
+        { "num": 110, "front": "GitOps vs CI/CD push?", "back": "GitOps: cluster pulls desired state from Git (ArgoCD/Flux). Push: CI pipeline applies to cluster (kubectl/helm). GitOps is more auditable" }
+      ]
+    },
+    {
+      "name": "Advanced Concepts",
+      "cards": [
+        { "num": 111, "front": "What is a sidecar container?", "back": "Additional container in a Pod — handles logging, proxying, or config. K8s 1.28+ has native sidecar support" },
+        { "num": 112, "front": "What is an init container?", "back": "Runs before app containers start — used for setup tasks (DB migration, config download). Must complete successfully" },
+        { "num": 113, "front": "What is a CRD?", "back": "Custom Resource Definition — extends the K8s API with your own resource types (e.g. Certificate, VirtualService)" },
+        { "num": 114, "front": "What is an Operator?", "back": "Controller + CRDs that automate complex app lifecycle — e.g. database provisioning, backup, failover" },
+        { "num": 115, "front": "What is a Service Mesh?", "back": "Infrastructure layer for service-to-service communication — mTLS, traffic management, observability. Istio, Linkerd" },
+        { "num": 116, "front": "Rolling update strategy?", "back": "Default Deployment strategy — replaces Pods gradually. maxSurge and maxUnavailable control the pace" },
+        { "num": 117, "front": "Blue/green deployment in K8s?", "back": "Run two Deployments (blue/green), switch Service selector to the new version. Instant rollback by switching back" },
+        { "num": 118, "front": "Canary deployment in K8s?", "back": "Route small % of traffic to new version — via weighted Ingress, Service Mesh, or Argo Rollouts" },
+        { "num": 119, "front": "What is Kustomize?", "back": "Template-free YAML customization — overlays for different environments. Built into kubectl (kubectl apply -k)" },
+        { "num": 120, "front": "What is a finalizer?", "back": "Metadata key that prevents resource deletion until a controller completes cleanup — e.g. PV data deletion" }
+      ]
+    }
+  ]
+}

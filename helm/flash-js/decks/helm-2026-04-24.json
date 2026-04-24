@@ -1,0 +1,40 @@
+{
+  "name": "Helm (2026-04-24)",
+  "sections": [
+    {
+      "name": "Core Concepts",
+      "cards": [
+        { "num": 1, "front": "What is Helm?", "back": "Package manager for Kubernetes — bundles K8s manifests into charts, manages releases, handles upgrades and rollbacks" },
+        { "num": 2, "front": "What is a Helm chart?", "back": "A collection of files describing a K8s application: Chart.yaml (metadata), values.yaml (defaults), templates/ (manifests)" },
+        { "num": 3, "front": "What is a Helm release?", "back": "A deployed instance of a chart — one chart can be installed multiple times as different releases" },
+        { "num": 4, "front": "Chart.yaml?", "back": "Chart metadata: name, version, appVersion, description, dependencies. name sets .Chart.Name in templates" },
+        { "num": 5, "front": "values.yaml?", "back": "Default configuration values — overridden by -f values-prod.yaml or --set key=value at install time" },
+        { "num": 6, "front": "helm install vs upgrade?", "back": "install: first deployment. upgrade: update existing release. upgrade --install: does both (idempotent)" },
+        { "num": 7, "front": "helm template?", "back": "Renders chart templates locally without installing — useful for debugging and GitOps (render then apply)" },
+        { "num": 8, "front": "helm diff?", "back": "Plugin that shows what would change before upgrading — like kubectl diff but for Helm releases" }
+      ]
+    },
+    {
+      "name": "Templates",
+      "cards": [
+        { "num": 9, "front": ".Release.Name?", "back": "The name given to the release at install time — used to name resources uniquely" },
+        { "num": 10, "front": ".Release.Namespace?", "back": "The namespace the release is deployed into — set by ArgoCD destination.namespace or --namespace flag" },
+        { "num": 11, "front": ".Chart.Name?", "back": "The name field from Chart.yaml — used to name Kubernetes resources in templates" },
+        { "num": 12, "front": ".Values?", "back": "Access values from values.yaml — e.g. .Values.replicaCount, .Values.image.tag" },
+        { "num": 13, "front": "valueFiles in ArgoCD?", "back": "spec.source.helm.valueFiles: [values-gcp.yaml] — ArgoCD passes these to helm template at sync time" },
+        { "num": 14, "front": "releaseName in ArgoCD?", "back": "spec.source.helm.releaseName overrides the release name — controls .Release.Name and resource naming in templates" },
+        { "num": 15, "front": "helm-secrets?", "back": "Plugin to encrypt values files with SOPS/GPG — decrypts at deploy time. Keeps secrets out of plaintext Git" }
+      ]
+    },
+    {
+      "name": "Operations",
+      "cards": [
+        { "num": 16, "front": "helm list?", "back": "List all releases in a namespace: helm list -A (all namespaces)" },
+        { "num": 17, "front": "helm get values?", "back": "Show values used for a release: helm get values <release> -n <namespace>" },
+        { "num": 18, "front": "helm rollback?", "back": "Roll back to a previous revision: helm rollback <release> <revision> -n <namespace>" },
+        { "num": 19, "front": "helm repo?", "back": "helm repo add <name> <url> — adds a chart repository. helm repo update — fetches latest charts" },
+        { "num": 20, "front": "Helm release history?", "back": "helm history <release> — shows all revisions with status, chart version, and description" }
+      ]
+    }
+  ]
+}
